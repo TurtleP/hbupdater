@@ -76,11 +76,14 @@ int parseArgs(args::Info& info, int argc, char* argv[])
         }
     }
 
-    if (status < 3)
-        return args::dump(argv[0]);
+    if (g_dumpMode)
+    {
+        if (status < 3)
+            return args::dump(argv[0]);
+    }
     else
     {
-        if (!g_dumpMode && status < 5)
+        if (status < 5)
             return args::pack(argv[0]);
     }
 
