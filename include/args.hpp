@@ -4,10 +4,10 @@ namespace args
 {
     struct Info
     {
-        char* mode;
+        char* mode;   //< Application mode
+        char* output; //< Output dir/filename
 
-        char* filepath; //< filepath for dump
-        char* outDirectory;
+        char* filepath; //< Filepath for dump
 
         char* binaryPath; //< Path for binary data
         char* smdhPath;   //< Path for smdh file
@@ -37,7 +37,7 @@ namespace args
 
     inline int pack(const char* programName)
     {
-        fprintf(stderr, "Usage: %s pack <binary> <smdh> <romfs>", programName);
+        fprintf(stderr, "Usage: %s pack <binary> <smdh> <romfs> <output>.3dsx", programName);
 
         return 0;
     }
