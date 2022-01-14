@@ -51,12 +51,12 @@ int update::init(const args::Info& info)
 
         /* read our relocation header */
         _3DSX::RelocationHeader relocationHeader {};
-        uint32_t* relocationHeaderData = new uint32_t[header.relocationHeaderSize];
+        uint32_t* relocationHeaderData = new uint32_t[header.relocationHeaderSize / 4];
 
         fread(relocationHeaderData, 1, header.relocationHeaderSize, file);
 
-        uint32_t numRelocations = 0;
-        for (size_t index = 0; index < header.relocationHeaderSize; index += sizeof(uint32_t))
+        size_t numRelocations = 0;
+        for (uint32_t index = 0; index < header.relocationHeaderSize / 4; index++)
             numRelocations += relocationHeaderData[index];
 
         /* calculate the execution section size */
