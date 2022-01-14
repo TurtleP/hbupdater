@@ -4,6 +4,8 @@
 
 namespace SMDH
 {
+    static constexpr uint32_t MAGIC = 1212435795;
+
     struct Title
     {
         uint16_t shortDescription[0x40];

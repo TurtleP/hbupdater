@@ -20,6 +20,13 @@ namespace _3DSX
         uint32_t bssSize;
     };
 
+    struct ExtendedHeader
+    {
+        uint32_t smdhOffset;
+        uint32_t smdhSize;
+        uint32_t romfsOffset;
+    };
+
     struct RelocationHeader
     {
         uint32_t cAbsolute;

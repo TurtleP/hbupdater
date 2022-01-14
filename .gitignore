@@ -1,3 +1,6 @@
 .clang-format
 build
 dist
+test
+*.3dsx
+.vscode
