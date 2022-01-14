@@ -49,8 +49,22 @@ int update::init(const args::Info& info)
         fread(extendedHeaderData, 1, header.headerSize - structHeaderSize, file);
         memcpy(&extendedHeader, extendedHeaderData, sizeof(_3DSX::ExtendedHeader));
 
+        /* read our relocation header */
+        _3DSX::RelocationHeader relocationHeader {};
+        uint32_t* relocationHeaderData = new uint32_t[header.relocationHeaderSize];
+
+        fread(relocationHeaderData, 1, header.relocationHeaderSize, file);
+
+        uint32_t numRelocations = 0;
+        for (size_t index = 0; index < header.relocationHeaderSize; index += sizeof(uint32_t))
+            numRelocations += relocationHeaderData[index];
+
         /* calculate the execution section size */
-        size_t executionSize = extendedHeader.smdhOffset - header.headerSize;
+        size_t executionSize = header.headerSize;
+        executionSize += numRelocations * sizeof(_3DSX::Relocation);
+        executionSize += header.codeSegmentSize + header.rodataSegmentSize;
+        executionSize += (header.dataSegmentSize - header.bssSize);
+        executionSize += header.relocationHeaderSize;
 
         /* create and read into a new buffer for the execution data */
         uint8_t* executionData = new uint8_t[executionSize];
@@ -109,6 +123,8 @@ int update::init(const args::Info& info)
 
         delete[] executionData;
 
+        delete[] relocationHeaderData;
+
         delete[] extendedHeaderData;
     }
     else /* no extended header, return -1 */
@@ -122,11 +138,11 @@ int update::init(const args::Info& info)
 }
 
 /**
- * @brief Updates the SMDH section of a 3DSX binary.
+ * @brief Read a file
  *
- * @param smdhPath The path to the SMDH file to read
- *
- * @return uint8_t* The pointer to the read SMDH data
+ * @param filepath Path to the file to read
+ * @param size output size of the file
+ * @return uint8_t* Pointer to the buffer
  */
 uint8_t* update::read(char* filepath, uint32_t& size)
 {
