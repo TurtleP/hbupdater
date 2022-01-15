@@ -49,22 +49,35 @@ int update::init(const args::Info& info)
         fread(extendedHeaderData, 1, header.headerSize - structHeaderSize, file);
         memcpy(&extendedHeader, extendedHeaderData, sizeof(_3DSX::ExtendedHeader));
 
-        /* read our relocation header */
-        _3DSX::RelocationHeader relocationHeader {};
-        uint32_t* relocationHeaderData = new uint32_t[header.relocationHeaderSize / 4];
+        /* header.relocationHeaderSize divided by four */
+        size_t numRelocationTables = header.relocationHeaderSize / 4;
 
-        fread(relocationHeaderData, 1, header.relocationHeaderSize, file);
+        /* read our relocation headers */
+        size_t numRelocations          = 0;
+        uint32_t* relocationHeaderData = new uint32_t[3 * numRelocationTables];
 
-        size_t numRelocations = 0;
-        for (uint32_t index = 0; index < header.relocationHeaderSize / 4; index++)
-            numRelocations += relocationHeaderData[index];
+        for (size_t relocationIndex = 0; relocationIndex < 3; relocationIndex++)
+        {
+            size_t relocationPosition = numRelocationTables * relocationIndex;
+            size_t read               = fread(relocationHeaderData + relocationPosition, 1,
+                                              header.relocationHeaderSize, file);
+
+            if (read != header.relocationHeaderSize)
+            {
+                printf("Cannot read relocation header %d", relocationIndex);
+                return -1;
+            }
+
+            for (uint32_t index = 0; index < numRelocationTables; index++)
+                numRelocations += (relocationHeaderData + relocationPosition)[index];
+        }
 
         /* calculate the execution section size */
         size_t executionSize = header.headerSize;
         executionSize += numRelocations * sizeof(_3DSX::Relocation);
         executionSize += header.codeSegmentSize + header.rodataSegmentSize;
         executionSize += (header.dataSegmentSize - header.bssSize);
-        executionSize += header.relocationHeaderSize;
+        executionSize += (numRelocationTables * 3);
 
         /* create and read into a new buffer for the execution data */
         uint8_t* executionData = new uint8_t[executionSize];
@@ -93,17 +106,25 @@ int update::init(const args::Info& info)
 
         extendedHeader.romfsOffset = extendedHeader.smdhOffset + extendedHeader.smdhSize;
 
-        uint8_t* outData = new uint8_t[header.headerSize + executionSize + smdhSize + romfsSize];
+        size_t finalSize = header.headerSize + (numRelocationTables * 3);
+        finalSize += executionSize + smdhSize + romfsSize;
+
+        uint8_t* outData = new uint8_t[finalSize];
 
         /* copy the header */
         memcpy(outData, headerData, structHeaderSize);
 
         /* copy the extended header */
-        memcpy(outData + structHeaderSize, extendedHeaderData,
-               header.headerSize - structHeaderSize);
+        size_t extendedHeaderSize = header.headerSize - structHeaderSize;
+        memcpy(outData + structHeaderSize, extendedHeaderData, extendedHeaderSize);
 
-        /* copy the execution data */
-        memcpy(outData + header.headerSize, executionData, executionSize);
+        /* copy the relocation header (comes right after extended header) */
+        /* header.headerSize includes the extended header size */
+        memcpy(outData + header.headerSize, relocationHeaderData, (numRelocationTables * 3));
+
+        /* copy the execution data (rodata relocation header -> data relocation table) */
+        memcpy(outData + header.headerSize + (numRelocationTables * 3), executionData,
+               executionSize);
 
         /* copy the SMDH data */
         memcpy(outData + extendedHeader.smdhOffset, smdhBuffer, smdhSize);
@@ -113,7 +134,7 @@ int update::init(const args::Info& info)
 
         /* write the final output */
         FILE* outFile = fopen(info.outPath, "wb");
-        fwrite(outData, 1, header.headerSize + executionSize + smdhSize + romfsSize, outFile);
+        fwrite(outData, 1, finalSize, outFile);
 
         /* cleanup */
 
@@ -128,13 +149,24 @@ int update::init(const args::Info& info)
         delete[] extendedHeaderData;
     }
     else /* no extended header, return -1 */
+    {
+        update::exit(file, headerData);
+
         return -1;
+    }
 
-    delete[] headerData;
-
-    fclose(file);
+    update::exit(file, headerData);
 
     return 0;
+}
+
+void update::exit(FILE* file, uint8_t* data)
+{
+    if (data)
+        delete[] data;
+
+    if (file)
+        fclose(file);
 }
 
 /**

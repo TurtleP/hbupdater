@@ -1,6 +1,6 @@
 #pragma once
 
-#include "types.hpp"
+#include <stdint.h>
 
 namespace _3DSX
 {
