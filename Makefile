@@ -1,5 +1,3 @@
-rwildcard=$(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
-
 EXEC_NAME := $(notdir $(CURDIR))
 
 DEBUG_FLAGS := -g -Og
@@ -8,22 +6,11 @@ RELEASE_FLAGS := -O3 -flto
 SOURCES		:= source
 INCLUDES	:= include
 
-# Files found through here will not be formatted
-NOFORMAT_SOURCES :=
-NOFORMAT_EXTRA_SOURCE_FILES :=
-NOFORMAT_INCLUDES :=
-
 BUILD_RELEASE := build_release
 BUILD_DEBUG := build
 
 OUT_RELEASE := dist_release
 OUT_DEBUG := dist
-
-# Uncomment this to make SOURCES recursive
-# SOURCES_RECURSIVE := 1
-# Note that this is not a recursive folder blacklist (no matter the above setting). It blacklists exactly the folders you specify
-SOURCES_BLACKLIST :=
-SOURCES_FILE_BLACKLIST :=
 
 CFLAGS := $(CFLAGS)
 CXXFLAGS := $(CXXFLAGS) -std=c++17
@@ -31,28 +18,10 @@ LDFLAGS := $(LDFLAGS)
 
 # Past here there shouldn't be much that needs editing unless extra file types are necessary
 #------------------------------------------------------------------------------------------------
-
-ifeq ($(strip $(SOURCES_RECURSIVE)),1)
-# Kinda hacky, but it works
-SOURCES := $(filter-out $(addsuffix /,$(SOURCES_BLACKLIST)),$(sort $(dir $(call rwildcard,$(SOURCES),*.c *.cpp))))
-NOFORMAT_SOURCES := $(filter-out $(addsuffix /,$(SOURCES_BLACKLIST)),$(sort $(dir $(call rwildcard,$(NOFORMAT_SOURCES),*.c *.cpp))))
-CFILES := $(patsubst ./%,%,$(foreach dir,$(SOURCES),$(wildcard $(dir:=*.c)))) $(filter %.c,$(EXTRA_SOURCE_FILES))
-NOFORMAT_CFILES := $(patsubst ./%,%,$(foreach dir,$(NOFORMAT_SOURCES),$(wildcard $(dir:=*.c)))) $(filter %.c,$(NOFORMAT_EXTRA_SOURCE_FILES))
-CPPFILES := $(patsubst ./%,%,$(foreach dir,$(SOURCES),$(wildcard $(dir:=*.cpp)))) $(filter %.cpp,$(EXTRA_SOURCE_FILES))
-NOFORMAT_CPPFILES := $(patsubst ./%,%,$(foreach dir,$(NOFORMAT_SOURCES),$(wildcard $(dir:=*.cpp)))) $(filter %.cpp,$(NOFORMAT_EXTRA_SOURCE_FILES))
-else
-SOURCES := $(filter-out $(SOURCES_BLACKLIST),$(SOURCES))
-NOFORMAT_SOURCES := $(filter-out $(SOURCES_BLACKLIST),$(NOFORMAT_SOURCES))
 CFILES := $(patsubst ./%,%,$(foreach dir,$(SOURCES),$(wildcard $(dir)/*.c))) $(filter %.c,$(EXTRA_SOURCE_FILES))
 NOFORMAT_CFILES := $(patsubst ./%,%,$(foreach dir,$(NOFORMAT_SOURCES),$(wildcard $(dir)/*.c))) $(filter %.c,$(NOFORMAT_EXTRA_SOURCE_FILES))
 CPPFILES := $(patsubst ./%,%,$(foreach dir,$(SOURCES),$(wildcard $(dir)/*.cpp))) $(filter %.cpp,$(EXTRA_SOURCE_FILES))
 NOFORMAT_CPPFILES := $(patsubst ./%,%,$(foreach dir,$(NOFORMAT_SOURCES),$(wildcard $(dir)/*.cpp))) $(filter %.cpp,$(NOFORMAT_EXTRA_SOURCE_FILES))
-endif
-
-CFILES := $(filter-out $(SOURCES_FILE_BLACKLIST),$(CFILES))
-NOFORMAT_CFILES := $(filter-out $(SOURCES_FILE_BLACKLIST),$(NOFORMAT_CFILES))
-CPPFILES := $(filter-out $(SOURCES_FILE_BLACKLIST),$(CPPFILES))
-NOFORMAT_CPPFILES := $(filter-out $(SOURCES_FILE_BLACKLIST),$(NOFORMAT_CPPFILES))
 
 ifeq ($(strip $(RELEASE)),)
 OPTIMIZE := $(DEBUG_FLAGS)
@@ -64,7 +33,7 @@ BUILD := $(BUILD_RELEASE)
 OUT := $(OUT_RELEASE)
 endif
 
-CFLAGS := $(CFLAGS) $(foreach dir, $(INCLUDES) $(NOFORMAT_INCLUDES), -I$(CURDIR)/$(dir)) $(OPTIMIZE)
+CFLAGS := $(CFLAGS) $(foreach dir, $(INCLUDES), -I$(CURDIR)/$(dir)) $(OPTIMIZE)
 CXXFLAGS := $(CFLAGS) $(CXXFLAGS) $(OPTIMIZE)
 LDFLAGS := $(LDFLAGS) $(OPTIMIZE)
 

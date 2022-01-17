@@ -4,3 +4,4 @@ dist
 test
 *.3dsx
 .vscode
+*.stackdump

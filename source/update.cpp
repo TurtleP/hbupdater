@@ -1,9 +1,22 @@
 #include "update.hpp"
 
-#include <filesystem>
+#include "file.hpp"
+
 #include <memory.h>
 #include <stdio.h>
 #include <sys/stat.h>
+
+#define errorf(format, ...)              \
+    {                                    \
+        printf((format), ##__VA_ARGS__); \
+        return -1;                       \
+    };
+
+#define error(str)             \
+    {                          \
+        errorf("%s\n", (str)); \
+        return -1;             \
+    }
 
 /**
  * @brief Update the SMDH and RomFS sections
@@ -11,190 +24,156 @@
  * @param info Arguments from main
  * @return int success value
  */
-int update::init(const args::Info& info)
+int update::init(const args::Info& args)
 {
-    /* open the 3dsx for reading */
-    FILE* file = fopen(info.filepath, "rb");
+    File executable(args.filepath);
 
-    if (!file)
+    /* open the 3dsx for reading */
+    if (!executable.Open(File::MODE_READ))
+        return -1;
+
+    /* read in the header data */
+    _3DSX::Header header {};
+    executable.Read(&header, _3DSX::HEADER_SIZE);
+
+    /* verify the magic in the header */
+    if (header.magic != _3DSX::MAGIC)
+        error("Invalid 3DSX file.");
+
+    if (header.headerSize <= 32)
+        error("No extended header found.");
+
+    _3DSX::ExtendedHeader extendedHeader {};
+    executable.Read(&extendedHeader, _3DSX::EXT_HEADER_SIZE);
+
+    /* get our relocation type count */
+    uint32_t numRelocationTypes = header.relocationHeaderSize / 4;
+
+    size_t numRelocations = 0;
+
+    /* there are 3 relocation headers */
+    _3DSX::RelocationHeader relocationHeaders[_3DSX::NUM_RELOC_TABLES];
+    std::fill_n(relocationHeaders, _3DSX::NUM_RELOC_TABLES, _3DSX::RelocationHeader {});
+
+    /* iterate our relocation table headers */
+    for (size_t index = 0; index < _3DSX::NUM_RELOC_TABLES; index++)
     {
-        printf("File %s does not exist.", info.filepath);
-        return fclose(file);
+        int64_t read = executable.Read(&relocationHeaders[index], header.relocationHeaderSize);
+
+        if (read != header.relocationHeaderSize)
+            errorf("Cannot read relocation header %d", index);
+
+        /* add up the total relocations */
+        for (uint32_t type = 0; type < numRelocationTypes; type++)
+        {
+            uint32_t* buffer = reinterpret_cast<uint32_t*>(&relocationHeaders[index]);
+            numRelocations += buffer[type];
+        }
     }
 
-    /* get the header size and make new a new data buffer for it */
-    size_t structHeaderSize = sizeof(_3DSX::Header);
-    uint8_t* headerData     = new uint8_t[structHeaderSize];
+    /* calculate the execution size */
+    size_t executionSize = numRelocations * _3DSX::RELOCATION_SIZE;
+    executionSize += header.codeSegmentSize + header.rodataSegmentSize;
+    executionSize += (header.dataSegmentSize - header.bssSize);
 
-    /* read the file into the header data buffer */
-    fread(headerData, 1, structHeaderSize, file);
+    /* create a data object to hold the data */
+    std::vector<uint8_t> executionData(executionSize);
 
-    _3DSX::Header header {};
+    /* check if it's valid, read it in if so */
+    executable.Read(executionData.data(), executionSize);
 
-    /* copy the header data buffer to the struct */
-    bool hasExtendedHeader = false;
-    memcpy(&header, headerData, sizeof(_3DSX::Header));
+    /* get the SMDH file data */
 
-    /* make sure we have an extended header to work with */
-    if (header.headerSize > 32)
-        hasExtendedHeader = true;
+    SMDH::Header smdhHeader {};
+    std::vector<uint8_t> smdhData = update::read(args.smdhPath);
 
-    if (hasExtendedHeader)
+    if (!smdhData.empty())
     {
-        /* create the new buffer for extended header data */
-        _3DSX::ExtendedHeader extendedHeader {};
-        uint8_t* extendedHeaderData = new uint8_t[header.headerSize - structHeaderSize];
-
-        /* read the data into the struct */
-        fread(extendedHeaderData, 1, header.headerSize - structHeaderSize, file);
-        memcpy(&extendedHeader, extendedHeaderData, sizeof(_3DSX::ExtendedHeader));
-
-        /* header.relocationHeaderSize divided by four */
-        size_t numRelocationTables = header.relocationHeaderSize / 4;
-
-        /* read our relocation headers */
-        size_t numRelocations          = 0;
-        uint32_t* relocationHeaderData = new uint32_t[3 * numRelocationTables];
-
-        for (size_t relocationIndex = 0; relocationIndex < 3; relocationIndex++)
-        {
-            size_t relocationPosition = numRelocationTables * relocationIndex;
-            size_t read               = fread(relocationHeaderData + relocationPosition, 1,
-                                              header.relocationHeaderSize, file);
-
-            if (read != header.relocationHeaderSize)
-            {
-                printf("Cannot read relocation header %d", relocationIndex);
-                return -1;
-            }
-
-            for (uint32_t index = 0; index < numRelocationTables; index++)
-                numRelocations += (relocationHeaderData + relocationPosition)[index];
-        }
-
-        /* calculate the execution section size */
-        size_t executionSize = header.headerSize;
-        executionSize += numRelocations * sizeof(_3DSX::Relocation);
-        executionSize += header.codeSegmentSize + header.rodataSegmentSize;
-        executionSize += (header.dataSegmentSize - header.bssSize);
-        executionSize += (numRelocationTables * 3);
-
-        /* create and read into a new buffer for the execution data */
-        uint8_t* executionData = new uint8_t[executionSize];
-        fread(executionData, 1, executionSize, file);
-
-        /* read the new SMDH file and update fields accordingly */
-        uint32_t smdhSize   = 0;
-        uint8_t* smdhBuffer = update::read(info.smdhPath, smdhSize);
-        if (smdhBuffer == nullptr)
-            return -2;
-
-        SMDH::Header smdhHeader {};
-        memcpy(&smdhHeader, smdhBuffer, sizeof(SMDH::Header));
+        /* validate the new data */
+        memcpy(&smdhHeader, smdhData.data(), SMDH::HEADER_SIZE);
 
         if (smdhHeader.magic != SMDH::MAGIC)
-            printf("Invalid SMDH file.");
+            error("Invalid SMDH file.");
 
-        extendedHeader.smdhSize   = smdhSize;
-        extendedHeader.smdhOffset = ftell(file);
-
-        uint32_t romfsSize = 0;
-
-        uint8_t* romfsBuffer = update::read(info.romfsPath, romfsSize);
-        if (romfsBuffer == nullptr)
-            return -2;
-
-        extendedHeader.romfsOffset = extendedHeader.smdhOffset + extendedHeader.smdhSize;
-
-        size_t finalSize = header.headerSize + (numRelocationTables * 3);
-        finalSize += executionSize + smdhSize + romfsSize;
-
-        uint8_t* outData = new uint8_t[finalSize];
-
-        /* copy the header */
-        memcpy(outData, headerData, structHeaderSize);
-
-        /* copy the extended header */
-        size_t extendedHeaderSize = header.headerSize - structHeaderSize;
-        memcpy(outData + structHeaderSize, extendedHeaderData, extendedHeaderSize);
-
-        /* copy the relocation header (comes right after extended header) */
-        /* header.headerSize includes the extended header size */
-        memcpy(outData + header.headerSize, relocationHeaderData, (numRelocationTables * 3));
-
-        /* copy the execution data (rodata relocation header -> data relocation table) */
-        memcpy(outData + header.headerSize + (numRelocationTables * 3), executionData,
-               executionSize);
-
-        /* copy the SMDH data */
-        memcpy(outData + extendedHeader.smdhOffset, smdhBuffer, smdhSize);
-
-        /* copy the RomFS data */
-        memcpy(outData + extendedHeader.romfsOffset, romfsBuffer, romfsSize);
-
-        /* write the final output */
-        FILE* outFile = fopen(info.outPath, "wb");
-        fwrite(outData, 1, finalSize, outFile);
-
-        /* cleanup */
-
-        delete[] romfsBuffer;
-
-        delete[] smdhBuffer;
-
-        delete[] executionData;
-
-        delete[] relocationHeaderData;
-
-        delete[] extendedHeaderData;
+        /* set the extended header data for the SMDH */
+        extendedHeader.smdhOffset = executable.Tell();
+        extendedHeader.smdhSize   = smdhData.size();
     }
-    else /* no extended header, return -1 */
+    else
     {
-        update::exit(file, headerData);
-
-        return -1;
+        /* if we didn't get any SMDH data, use the original data */
+        smdhData = std::vector<uint8_t>(extendedHeader.smdhSize);
+        executable.Read(smdhData.data(), smdhData.size());
     }
 
-    update::exit(file, headerData);
+    RomFS::Header romfsHeader {};
+    std::vector<uint8_t> romfsData = update::read(args.romfsPath);
+
+    if (!romfsData.empty())
+    {
+        /* validate the new RomFS data */
+        memcpy(&romfsHeader, romfsData.data(), RomFS::HEADER_SIZE);
+
+        if (romfsHeader.magic != RomFS::MAGIC)
+            error("Invalid RomFS file.");
+
+        /* set the extended header data for the RomFS */
+        extendedHeader.romfsOffset = extendedHeader.smdhOffset + extendedHeader.smdhSize;
+    }
+    else
+    {
+        /* if we didn't get any RomFS data, use the original data */
+        romfsData = executable.Read();
+    }
+
+    File updated(args.outPath);
+
+    if (!updated.Open(File::MODE_WRITE))
+        errorf("Failed to open %s for writing.", updated.GetFilename().c_str());
+
+    /* write our header */
+    updated.Write(&header, _3DSX::HEADER_SIZE);
+
+    /* write our extended header */
+    updated.Write(&extendedHeader, _3DSX::EXT_HEADER_SIZE);
+
+    /* write our relocation headers */
+    for (size_t index = 0; index < _3DSX::NUM_RELOC_TABLES; index++)
+        updated.Write(&relocationHeaders[index], header.relocationHeaderSize);
+
+    /* write the execution data */
+    updated.Write(executionData.data(), executionData.size());
+
+    /* write the SMDH data */
+    updated.Write(smdhData.data(), smdhData.size());
+
+    /* write the RomFS data */
+    updated.Write(romfsData.data(), romfsData.size());
+
+    if (!updated.Close())
+        errorf("Failed to close file %s.", updated.GetFilename().c_str());
 
     return 0;
-}
-
-void update::exit(FILE* file, uint8_t* data)
-{
-    if (data)
-        delete[] data;
-
-    if (file)
-        fclose(file);
 }
 
 /**
  * @brief Read a file
  *
  * @param filepath Path to the file to read
- * @param size output size of the file
- * @return uint8_t* Pointer to the buffer
+ *
+ * @return Data* data ptr object holding the file content
  */
-uint8_t* update::read(char* filepath, uint32_t& size)
+std::vector<uint8_t> update::read(char* filepath)
 {
-    FILE* file = fopen(filepath, "rb");
+    File file(filepath);
 
-    if (!file)
+    if (!file.Open(File::MODE_READ))
     {
-        printf("File %s does not exist.", filepath);
-        fclose(file);
+        printf("File %s does not exist.\n", filepath);
+        file.Close();
 
-        return nullptr;
+        return std::vector<uint8_t>(0);
     }
 
-    struct stat fileStat;
-    stat(filepath, &fileStat);
-
-    uint8_t* data = new uint8_t[fileStat.st_size];
-    fread(data, 1, fileStat.st_size, file);
-
-    size = fileStat.st_size;
-
-    return data;
+    return file.Read();
 }
