@@ -13,6 +13,9 @@ File::~File()
 
 bool File::Open(File::Mode mode)
 {
+    if (this->GetFilename().empty())
+        return false;
+
     const char* fmode = this->GetMode(mode);
 
     this->file = fopen(this->GetFilename().c_str(), fmode);

@@ -163,13 +163,12 @@ int update::init(const args::Info& args)
  *
  * @return Data* data ptr object holding the file content
  */
-std::vector<uint8_t> update::read(char* filepath)
+std::vector<uint8_t> update::read(const char* filepath)
 {
     File file(filepath);
 
     if (!file.Open(File::MODE_READ))
     {
-        printf("File %s does not exist.\n", filepath);
         file.Close();
 
         return std::vector<uint8_t>(0);

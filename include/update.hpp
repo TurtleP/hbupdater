@@ -12,5 +12,5 @@ namespace update
 {
     int init(const args::Info& args);
 
-    std::vector<uint8_t> read(char* filepath);
+    std::vector<uint8_t> read(const char* filepath);
 } // namespace update
