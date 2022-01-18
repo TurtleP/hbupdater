@@ -7,14 +7,6 @@ args::ParseStatus args::parse(args::Info& info, std::vector<char*>& arguments)
 {
     int value = 0;
 
-    if (arguments.size() > 1)
-        info.filepath = arguments.at(1);
-    else
-    {
-        fputs("No input file provided.\n", stderr);
-        return args::PARSE_FAILURE;
-    }
-
     // parse options
     while (true)
     {
@@ -55,6 +47,15 @@ args::ParseStatus args::parse(args::Info& info, std::vector<char*>& arguments)
         info.romfsPath = "";
 
     assert(optind >= 0);
+
+    if (static_cast<size_t>(optind) < arguments.size())
+        info.filepath = arguments[optind++];
+
+    if (!info.filepath)
+    {
+        fputs("No input file provided.\n", stderr);
+        return args::PARSE_FAILURE;
+    }
 
     if (!info.outPath)
     {
