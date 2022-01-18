@@ -46,9 +46,8 @@ namespace args
     const struct option long_options[] =
     {
         { "help",   no_argument,       nullptr, 'h' },
-        { "input",  required_argument, nullptr, 0   },
-        { "smdh",   optional_argument, nullptr, 's' },
-        { "romfs",  optional_argument, nullptr, 'r' },
+        { "smdh",   required_argument, nullptr, 's' },
+        { "romfs",  required_argument, nullptr, 'r' },
         { "output", required_argument, nullptr, 'o' },
         { nullptr,  no_argument,       nullptr, 0   }
     };
