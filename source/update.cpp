@@ -45,6 +45,7 @@ int update::init(const args::Info& args)
 
     _3DSX::ExtendedHeader extendedHeader {};
     executable.Read(&extendedHeader, _3DSX::EXT_HEADER_SIZE);
+    printf("%lu\n", extendedHeader.romfsOffset);
 
     /* get our relocation type count */
     uint32_t numRelocationTypes = header.relocationHeaderSize / 4;
@@ -102,8 +103,11 @@ int update::init(const args::Info& args)
     else
     {
         /* if we didn't get any SMDH data, use the original data */
-        smdhData = std::vector<uint8_t>(extendedHeader.smdhSize);
-        executable.Read(smdhData.data(), smdhData.size());
+        if (extendedHeader.smdhSize != 0)
+        {
+            smdhData = std::vector<uint8_t>(extendedHeader.smdhSize);
+            executable.Read(smdhData.data(), smdhData.size());
+        }
     }
 
     RomFS::Header romfsHeader {};
@@ -122,11 +126,14 @@ int update::init(const args::Info& args)
     }
     else
     {
-        /* if we didn't get any RomFS data, use the original data */
-        if (executable.Tell() == extendedHeader.smdhOffset)
-            executable.Seek(extendedHeader.romfsOffset);
+        if (extendedHeader.romfsOffset != 0)
+        {
+            /* if we didn't get any RomFS data, use the original data */
+            if (executable.Tell() == extendedHeader.smdhOffset)
+                executable.Seek(extendedHeader.romfsOffset);
 
-        romfsData = executable.Read();
+            romfsData = executable.Read();
+        }
     }
 
     File updated(args.outPath);
@@ -148,10 +155,12 @@ int update::init(const args::Info& args)
     updated.Write(executionData.data(), executionData.size());
 
     /* write the SMDH data */
-    updated.Write(smdhData.data(), smdhData.size());
+    if (smdhData.size() != 0)
+        updated.Write(smdhData.data(), smdhData.size());
 
     /* write the RomFS data */
-    updated.Write(romfsData.data(), romfsData.size());
+    if (romfsData.size() != 0)
+        updated.Write(romfsData.data(), romfsData.size());
 
     if (!updated.Close())
         errorf("Failed to close file %s.", updated.GetFilename().c_str());
