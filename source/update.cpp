@@ -45,7 +45,6 @@ int update::init(const args::Info& args)
 
     _3DSX::ExtendedHeader extendedHeader {};
     executable.Read(&extendedHeader, _3DSX::EXT_HEADER_SIZE);
-    printf("%lu\n", extendedHeader.romfsOffset);
 
     /* get our relocation type count */
     uint32_t numRelocationTypes = header.relocationHeaderSize / 4;
