@@ -30,6 +30,8 @@ class File
 
     bool Close();
 
+    bool Seek(uint64_t position);
+
     int64_t Tell();
 
     int64_t Read(void* destination, int64_t size = ALL);

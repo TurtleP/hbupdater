@@ -5,6 +5,7 @@ TARGET		:= $(notdir $(CURDIR))
 BUILD		:= build
 SOURCES		:= source
 INCLUDES	:= include
+OUTDIR		:= dist
 #---------------------------------------------------------------------------------
 # filetypes
 #---------------------------------------------------------------------------------
@@ -13,7 +14,7 @@ CPPFILES	:= $(foreach dir, $(SOURCES), $(wildcard $(dir)/*.cpp))
 #---------------------------------------------------------------------------------
 # files we need
 #---------------------------------------------------------------------------------
-OUTPUT	:= $(CURDIR)/$(TARGET)
+OUTPUT	:= $(OUTDIR)/$(TARGET)
 
 OFILES 			:= $(CPPFILES:.cpp=.cpp.o) $(CFILES:.c=.c.o)
 BUILD_OFILES	:= $(foreach file, $(OFILES), $(addprefix $(BUILD)/, $(file)))
@@ -54,6 +55,7 @@ clean:
 # main targets
 #---------------------------------------------------------------------------------
 $(OUTPUT): $(BUILD_OFILES)
+	@mkdir -p $(dir $@)
 	$(LD) $(BUILD_OFILES) $(LDFLAGS) -o $@
 
 $(BUILD)/%.c.o: %.c

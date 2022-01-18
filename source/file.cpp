@@ -64,6 +64,11 @@ uint64_t File::GetSize()
     return size;
 }
 
+bool File::Seek(uint64_t position)
+{
+    return this->file != nullptr && (fseek(this->file, position, SEEK_SET) == 0);
+}
+
 int64_t File::Tell()
 {
     if (!this->file)

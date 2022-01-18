@@ -123,6 +123,9 @@ int update::init(const args::Info& args)
     else
     {
         /* if we didn't get any RomFS data, use the original data */
+        if (executable.Tell() == extendedHeader.smdhOffset)
+            executable.Seek(extendedHeader.romfsOffset);
+
         romfsData = executable.Read();
     }
 
