@@ -45,8 +45,10 @@ namespace SMDH
         SMDH::Title titles[0x10];
         SMDH::Settings settings;
         uint8_t zeroTwo[0x08];
+        uint16_t smallIcon[0x240];
+        uint16_t largeIcon[0x900];
     };
 
     static constexpr size_t HEADER_SIZE = sizeof(Header);
-    static_assert(HEADER_SIZE == 0x2040);
+    static_assert(HEADER_SIZE == 0x36C0);
 }; // namespace SMDH
