@@ -5,7 +5,7 @@
 
 namespace _3DSX
 {
-    static constexpr uint32_t MAGIC       = 0x58534433;
+    static constexpr char MAGIC[4]        = { '3', 'D', 'S', 'X' };
     static constexpr int NUM_RELOC_TABLES = 0x03;
 
     /**
@@ -14,7 +14,7 @@ namespace _3DSX
      */
     struct Header
     {
-        uint32_t magic;
+        char magic[4];
         uint16_t headerSize;
         uint16_t relocationHeaderSize;
         uint32_t formatVersion;

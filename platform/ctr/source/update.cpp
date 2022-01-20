@@ -29,7 +29,7 @@ int update::init(const args::Info& args)
     executable.Read(&header, _3DSX::HEADER_SIZE);
 
     /* verify the magic in the header */
-    if (header.magic != _3DSX::MAGIC)
+    if (strncmp(header.magic, _3DSX::MAGIC, 4) != 0)
         error("Invalid 3DSX file.");
 
     if (header.headerSize <= 32)
@@ -84,7 +84,7 @@ int update::init(const args::Info& args)
         /* validate the new data */
         memcpy(&smdhHeader, smdhData.data(), SMDH::HEADER_SIZE);
 
-        if (smdhHeader.magic != SMDH::MAGIC)
+        if (strncmp(smdhHeader.magic, SMDH::MAGIC, 4) != 0)
             error("Invalid SMDH file.");
 
         /* set the extended header data for the SMDH */
@@ -109,7 +109,7 @@ int update::init(const args::Info& args)
         /* validate the new RomFS data */
         memcpy(&romfsHeader, romfsData.data(), RomFS::HEADER_SIZE);
 
-        if (romfsHeader.magic != RomFS::MAGIC)
+        if (strncmp(romfsHeader.magic, RomFS::MAGIC, 4) != 0)
             error("Invalid RomFS file.");
 
         /* set the extended header data for the RomFS */

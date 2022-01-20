@@ -28,7 +28,11 @@ int update::init(const args::Info& args)
 
     if (strncmp(header.magic, NRO::MAGIC, 4) != 0)
         error("Invalid NRO header.");
+    printf("%lu\n", header.bssSize);
+    std::vector<uint8_t> nroData(header.totalSize);
+    executable.Read(nroData.data(), nroData.size());
 
+    printf("%ld\n", executable.Tell());
     /* get the assets data */
     Assets::Header assetsHeader {};
     executable.Read(&assetsHeader, Assets::HEADER_SIZE);
@@ -98,6 +102,14 @@ int update::init(const args::Info& args)
 
     if (!updated.Open(File::MODE_WRITE))
         errorf("Failed to open %s for writing.", updated.GetFilename().c_str());
+
+    for (size_t index = 0; index < 3; index++)
+    {
+        executable.Seek(header.segmentHeaders[index].offset);
+        std::vector<uint8_t> buffer = executable.Read(header.segmentHeaders[index].size);
+
+        updated.Write(buffer.data(), buffer.size());
+    }
 
     /* write our start */
     updated.Write(&start, NRO::START_SIZE);

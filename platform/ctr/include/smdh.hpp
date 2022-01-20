@@ -4,7 +4,7 @@
 
 namespace SMDH
 {
-    static constexpr uint32_t MAGIC = 1212435795;
+    static constexpr char MAGIC[4] = { 'S', 'M', 'D', 'H' };
 
     /**
      * @brief SMDH Title Info
@@ -39,7 +39,7 @@ namespace SMDH
      */
     struct Header
     {
-        uint32_t magic;
+        char magic[4];
         uint16_t version;
         uint16_t zero;
         SMDH::Title titles[0x10];

@@ -4,7 +4,7 @@
 
 namespace RomFS
 {
-    static constexpr uint32_t MAGIC        = 0x28;
+    static constexpr char MAGIC[4]         = { 'I', 'V', 'F', 'C' };
     static constexpr uint32_t MAGIC_NUMBER = 0x10000;
 
     /**
@@ -13,7 +13,7 @@ namespace RomFS
      */
     struct Header
     {
-        uint32_t magic;
+        char magic[4];
         uint32_t magicNumber;
 
         uint32_t masterHashSize;

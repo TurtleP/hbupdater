@@ -10,8 +10,8 @@ namespace NRO
     struct Start
     {
         uint32_t unused;
-        uint32_t modZeroOffset;
-        uint64_t padding;
+        uint32_t modOffset;
+        uint8_t padding[0x08];
     };
 
     static constexpr size_t START_SIZE = sizeof(Start);
@@ -30,7 +30,7 @@ namespace NRO
     {
         char magic[4];
         uint32_t version;
-        uint32_t totalSize;
+        uint32_t totalSize; //< total nro size before assets
         uint32_t flags;
         NRO::SegmentHeader segmentHeaders[3];
         uint32_t bssSize;
