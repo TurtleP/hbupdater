@@ -28,7 +28,7 @@ CXXSTDLIB	:= c++17
 
 RELEASE_FLAGS	:= $(if $(strip $(DEBUG)), $(DEBUGGIN), $(OPTIMIZE))
 #---------------------------------------------------------------------------------
-CFLAGS		:= $(CFLAGS) $(INCLUDE) $(RELEASE_FLAGS)
+CFLAGS		:= $(CFLAGS) -D__HAC__ $(INCLUDE) $(RELEASE_FLAGS)
 CXXFLAGS 	:= $(CFLAGS) $(CXXFLAGS) -std=$(CXXSTDLIB) $(RELEASE_FLAGS)
 LDFLAGS 	:= $(LDFLAGS) $(RELEASE_FLAGS)
 #---------------------------------------------------------------------------------

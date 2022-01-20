@@ -1,29 +1,11 @@
-#pragma once
-
-#include <getopt.h>
-#include <stdio.h>
-
-#include <string>
-#include <vector>
+#include "argsc.hpp"
 
 namespace args
 {
-    enum ParseStatus
+    struct Info : IInfo
     {
-        PARSE_SUCCESS,
-        PARSE_FAILURE,
-        PARSE_EXIT,
+        const char* smdhPath; //< Path for smdh file
     };
-
-    struct Info
-    {
-        const char* filepath;  //< Filepath for dump
-        const char* smdhPath;  //< Path for smdh file
-        const char* romfsPath; //< Path for RomFS
-        const char* outPath;
-    };
-
-    ParseStatus parse(args::Info& info, std::vector<char*>& args);
 
     inline int usage(const char* programName)
     {
@@ -33,10 +15,9 @@ namespace args
                 "    help      Show this help message\n"
                 "    -s --smdh <file> Filepath to the new SMDH file\n"
                 "    -r --romfs <file> Filepath to the new RomFS\n"
-                "    -o --output <file> Output file"
+                "    -o --output <file> Output file\n"
                 "  Arguments:\n"
-                "    input  Filepath to the 3dsx file"
-                "    output Filepath to output as",
+                "    input  Filepath to the 3dsx file",
                 programName);
 
         return 0;

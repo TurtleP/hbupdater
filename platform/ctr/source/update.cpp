@@ -10,18 +10,6 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
-#define errorf(format, ...)              \
-    {                                    \
-        printf((format), ##__VA_ARGS__); \
-        return -1;                       \
-    };
-
-#define error(str)             \
-    {                          \
-        errorf("%s\n", (str)); \
-        return -1;             \
-    }
-
 /**
  * @brief Update the SMDH and RomFS sections
  *
@@ -169,25 +157,4 @@ int update::init(const args::Info& args)
         errorf("Failed to close file %s.", updated.GetFilename().c_str());
 
     return 0;
-}
-
-/**
- * @brief Read a file
- *
- * @param filepath Path to the file to read
- *
- * @return Data* data ptr object holding the file content
- */
-std::vector<uint8_t> update::read(const char* filepath)
-{
-    File file(filepath);
-
-    if (!file.Open(File::MODE_READ))
-    {
-        file.Close();
-
-        return std::vector<uint8_t>(0);
-    }
-
-    return file.Read();
 }
