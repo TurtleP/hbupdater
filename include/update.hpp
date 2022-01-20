@@ -1,9 +1,5 @@
 #pragma once
 
-#include "3dsx.hpp"
-#include "romfs.hpp"
-#include "smdh.hpp"
-
 #include "args.hpp"
 
 #include <vector>
