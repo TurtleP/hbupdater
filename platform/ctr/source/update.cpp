@@ -96,7 +96,7 @@ int update::init(const args::Info& args)
         /* if we didn't get any SMDH data, use the original data */
         if (extendedHeader.smdhSize != 0)
         {
-            smdhData = std::vector<uint8_t>(extendedHeader.smdhSize);
+            smdhData.resize(extendedHeader.smdhSize);
             executable.Read(smdhData.data(), smdhData.size());
         }
     }

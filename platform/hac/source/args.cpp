@@ -10,7 +10,7 @@ args::ParseStatus args::parse(args::Info& info, std::vector<char*>& arguments)
     // parse options
     while (true)
     {
-        value = getopt_long(arguments.size(), arguments.data(), "h:s:r:o:", args::long_options,
+        value = getopt_long(arguments.size(), arguments.data(), "h:s:r:i:n:o:", args::long_options,
                             nullptr);
 
         if (value == -1)

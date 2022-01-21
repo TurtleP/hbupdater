@@ -28,11 +28,12 @@ int update::init(const args::Info& args)
 
     if (strncmp(header.magic, NRO::MAGIC, 4) != 0)
         error("Invalid NRO header.");
-    printf("%lu\n", header.bssSize);
-    std::vector<uint8_t> nroData(header.totalSize);
+
+    size_t dataSize = header.totalSize - (NRO::START_SIZE + NRO::HEADER_SIZE);
+
+    std::vector<uint8_t> nroData(dataSize);
     executable.Read(nroData.data(), nroData.size());
 
-    printf("%ld\n", executable.Tell());
     /* get the assets data */
     Assets::Header assetsHeader {};
     executable.Read(&assetsHeader, Assets::HEADER_SIZE);
@@ -55,6 +56,9 @@ int update::init(const args::Info& args)
     {
         if (assetsHeader.icon.size != 0)
         {
+            iconData.resize(assetsHeader.icon.size);
+            offset += assetsHeader.icon.offset;
+
             executable.Seek(assetsHeader.icon.offset);
             executable.Read(iconData.data(), assetsHeader.icon.size);
         }
@@ -74,8 +78,14 @@ int update::init(const args::Info& args)
     {
         if (assetsHeader.nacp.size != 0)
         {
-            executable.Seek(assetsHeader.nacp.offset);
-            executable.Read(nacpData.data(), assetsHeader.nacp.size);
+            nacpData.resize(assetsHeader.nacp.size);
+            size_t nacpOffset = assetsHeader.nacp.offset;
+
+            if (offset != nacpOffset)
+                assetsHeader.nacp.offset = offset;
+
+            executable.Seek(nacpOffset);
+            executable.Read(nacpData.data(), nacpData.size());
         }
     }
 
@@ -93,7 +103,14 @@ int update::init(const args::Info& args)
     {
         if (assetsHeader.romfs.size != 0)
         {
-            executable.Seek(assetsHeader.romfs.offset);
+            romfsData.resize(assetsHeader.romfs.size);
+
+            size_t romfsOffset = assetsHeader.romfs.offset;
+
+            if (offset != Assets::HEADER_SIZE + assetsHeader.romfs.offset)
+                assetsHeader.romfs.offset = offset;
+
+            executable.Seek(romfsOffset);
             executable.Read(romfsData.data(), assetsHeader.romfs.size);
         }
     }
@@ -116,6 +133,8 @@ int update::init(const args::Info& args)
 
     /* write our header */
     updated.Write(&header, NRO::HEADER_SIZE);
+
+    updated.Seek(header.totalSize);
 
     /* write our assets header */
     updated.Write(&assetsHeader, Assets::HEADER_SIZE);
