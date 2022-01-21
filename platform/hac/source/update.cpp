@@ -86,6 +86,8 @@ int update::init(const args::Info& args)
 
             executable.Seek(nacpOffset);
             executable.Read(nacpData.data(), nacpData.size());
+
+            offset += nacpData.size();
         }
     }
 
@@ -107,7 +109,7 @@ int update::init(const args::Info& args)
 
             size_t romfsOffset = assetsHeader.romfs.offset;
 
-            if (offset != Assets::HEADER_SIZE + assetsHeader.romfs.offset)
+            if (offset != romfsOffset)
                 assetsHeader.romfs.offset = offset;
 
             executable.Seek(romfsOffset);
@@ -128,25 +130,31 @@ int update::init(const args::Info& args)
         updated.Write(buffer.data(), buffer.size());
     }
 
-    /* write our start */
-    updated.Write(&start, NRO::START_SIZE);
-
     /* write our header */
+    updated.Seek(NRO::START_SIZE);
     updated.Write(&header, NRO::HEADER_SIZE);
 
-    updated.Seek(header.totalSize);
-
     /* write our assets header */
+    updated.Seek(header.totalSize);
     updated.Write(&assetsHeader, Assets::HEADER_SIZE);
 
     if (iconData.size() != 0)
+    {
+        updated.Seek(header.totalSize + assetsHeader.icon.offset);
         updated.Write(iconData.data(), iconData.size());
+    }
 
     if (nacpData.size() != 0)
+    {
+        updated.Seek(header.totalSize + assetsHeader.nacp.offset);
         updated.Write(nacpData.data(), nacpData.size());
+    }
 
     if (romfsData.size() != 0)
+    {
+        updated.Seek(header.totalSize + assetsHeader.romfs.offset);
         updated.Write(romfsData.data(), romfsData.size());
+    }
 
     if (!updated.Close())
         errorf("Failed to close file %s.", updated.GetFilename().c_str());
