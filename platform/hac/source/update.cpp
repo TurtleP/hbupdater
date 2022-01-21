@@ -42,64 +42,60 @@ int update::init(const args::Info& args)
         error("Invalid Asset header.");
 
     /* get the icon data */
-    size_t offset                 = Assets::HEADER_SIZE;
+    uint64_t assetsOffset         = Assets::HEADER_SIZE;
     std::vector<uint8_t> iconData = update::read(args.iconPath);
 
     if (!iconData.empty())
     {
-        assetsHeader.icon.offset = offset;
+        assetsHeader.icon.offset = assetsOffset;
         assetsHeader.icon.size   = iconData.size();
-
-        offset += iconData.size();
     }
     else
     {
         if (assetsHeader.icon.size != 0)
         {
             iconData.resize(assetsHeader.icon.size);
-            offset += assetsHeader.icon.offset;
 
-            executable.Seek(assetsHeader.icon.offset);
-            executable.Read(iconData.data(), assetsHeader.icon.size);
+            executable.Seek(header.totalSize + assetsHeader.icon.offset);
+            executable.Read(iconData.data(), iconData.size());
         }
     }
+    assetsOffset += iconData.size();
 
     /* get the NACP data */
     std::vector<uint8_t> nacpData = update::read(args.nacpPath);
 
     if (!nacpData.empty())
     {
-        assetsHeader.nacp.offset = offset;
+        assetsHeader.nacp.offset = assetsOffset;
         assetsHeader.nacp.size   = nacpData.size();
-
-        offset += nacpData.size();
     }
     else
     {
         if (assetsHeader.nacp.size != 0)
         {
             nacpData.resize(assetsHeader.nacp.size);
-            size_t nacpOffset = assetsHeader.nacp.offset;
 
-            if (offset != nacpOffset)
-                assetsHeader.nacp.offset = offset;
+            /* capture original NACP offset */
+            uint64_t nacpOffset = assetsHeader.nacp.offset;
 
-            executable.Seek(nacpOffset);
+            if (assetsOffset != nacpOffset)
+                assetsHeader.nacp.offset = assetsOffset;
+
+            /* read the original data */
+            executable.Seek(header.totalSize + nacpOffset);
             executable.Read(nacpData.data(), nacpData.size());
-
-            offset += nacpData.size();
         }
     }
+    assetsOffset += nacpData.size();
 
     /* get the RomFS data */
-    std::vector<uint8_t> romfsData = update::read(args.nacpPath);
+    std::vector<uint8_t> romfsData = update::read(args.romfsPath);
 
     if (!romfsData.empty())
     {
-        assetsHeader.romfs.offset = offset;
+        assetsHeader.romfs.offset = assetsOffset;
         assetsHeader.romfs.size   = romfsData.size();
-
-        offset += romfsData.size();
     }
     else
     {
@@ -107,13 +103,15 @@ int update::init(const args::Info& args)
         {
             romfsData.resize(assetsHeader.romfs.size);
 
-            size_t romfsOffset = assetsHeader.romfs.offset;
+            /* capture original NACP offset */
+            uint64_t romfsOffset = assetsHeader.romfs.offset;
 
-            if (offset != romfsOffset)
-                assetsHeader.romfs.offset = offset;
+            if (assetsOffset != romfsOffset)
+                assetsHeader.romfs.offset = assetsOffset;
 
-            executable.Seek(romfsOffset);
-            executable.Read(romfsData.data(), assetsHeader.romfs.size);
+            /* read the original data */
+            executable.Seek(header.totalSize + romfsOffset);
+            executable.Read(romfsData.data(), romfsData.size());
         }
     }
 
