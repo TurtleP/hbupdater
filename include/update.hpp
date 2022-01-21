@@ -1,12 +1,20 @@
 #pragma once
 
-#include "3dsx.hpp"
-#include "romfs.hpp"
-#include "smdh.hpp"
-
 #include "args.hpp"
 
 #include <vector>
+
+#define errorf(format, ...)              \
+    {                                    \
+        printf((format), ##__VA_ARGS__); \
+        return -1;                       \
+    };
+
+#define error(str)             \
+    {                          \
+        errorf("%s\n", (str)); \
+        return -1;             \
+    }
 
 namespace update
 {

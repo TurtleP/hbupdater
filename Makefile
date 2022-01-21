@@ -1,70 +1,43 @@
-#---------------------------------------------------------------------------------
-.SUFFIXES:
-#---------------------------------------------------------------------------------
-TARGET		:= $(notdir $(CURDIR))
-BUILD		:= build
-SOURCES		:= source
-INCLUDES	:= include
-OUTDIR		:= dist
-#---------------------------------------------------------------------------------
-# filetypes
-#---------------------------------------------------------------------------------
-CFILES		:= $(foreach dir, $(SOURCES), $(wildcard $(dir)/*.c))
-CPPFILES	:= $(foreach dir, $(SOURCES), $(wildcard $(dir)/*.cpp))
-#---------------------------------------------------------------------------------
-# files we need
-#---------------------------------------------------------------------------------
-OUTPUT	:= $(OUTDIR)/$(TARGET)
+#-----------------------------------
+# Recursive file lookup
+# Credit to SciresM
+#-----------------------------------
+export BUILD	:= build
+export OUTDIR	:= dist
+#-----------------------------------
+# Common code
+#-----------------------------------
+export COMMON_INCLUDES ?= include
+export COMMON_SOURCES  ?= source
+#-----------------------------------
+# Build
+#-----------------------------------
+all: ctr hac
 
-OFILES 			:= $(CPPFILES:.cpp=.cpp.o) $(CFILES:.c=.c.o)
-BUILD_OFILES	:= $(foreach file, $(OFILES), $(addprefix $(BUILD)/, $(file)))
-DEPSFILES 		:= $(BUILD_OFILES:.o=.d)
+ctr:
+	@$(MAKE) -f platform/ctr/Makefile DEBUG=$(DEBUG) __APP_NAME__=3dsxupdate
 
-INCLUDE	:= $(foreach dir, $(INCLUDES), -I$(CURDIR)/$(dir))
-#---------------------------------------------------------------------------------
-# linker and compiler options
-#---------------------------------------------------------------------------------
-OPTIMIZE 	:= -O3 -flto
-DEBUG		:= -g -Og
-CXXSTDLIB	:= c++17
+hac:
+	@$(MAKE) -f platform/hac/Makefile DEBUG=$(DEBUG) __APP_NAME__=nroupdate
 
-RELEASE			:=
-RELEASE_FLAGS	:= $(if $(strip $(RELEASE)), $(OPTIMIZE), $(DEBUG))
-#---------------------------------------------------------------------------------
-CFLAGS		:= $(CFLAGS) $(INCLUDE) $(RELEASE_FLAGS)
-CXXFLAGS 	:= $(CFLAGS) $(CXXFLAGS) -std=$(CXXSTDLIB) $(RELEASE_FLAGS)
-LDFLAGS 	:= $(LDFLAGS) $(RELEASE_FLAGS)
-#---------------------------------------------------------------------------------
-# use CXX for linking C++ projects, CC for standard C
-#---------------------------------------------------------------------------------
-LD := $(if $(strip $(CPPFILES)), $(CXX), $(CC))
-#---------------------------------------------------------------------------------
-.PHONY: all clean
-#---------------------------------------------------------------------------------
-# makefile rules
-#---------------------------------------------------------------------------------
-all: $(BUILD) $(OUTPUT)
+#-----------------------------------
+# Build & Distribute (Release)
+#-----------------------------------
+COMMIT_HASH := $(shell git rev-parse --short HEAD)
 
-$(BUILD):
-	@mkdir -p $@
+#-----------------------------------
+# Debug/Development
+#-----------------------------------
+debug: ctr-debug hac-debug
 
+ctr-debug: DEBUG=1
+ctr-debug: ctr
+
+hac-debug: DEBUG=1
+hac-debug: hac
+
+#-----------------------------------
+# Clean
+#-----------------------------------
 clean:
-	@echo clean...
-	@rm -rf $(BUILD) $(OUTPUT)
-#---------------------------------------------------------------------------------
-# main targets
-#---------------------------------------------------------------------------------
-$(OUTPUT): $(BUILD_OFILES)
-	@mkdir -p $(dir $@)
-	$(LD) $(BUILD_OFILES) $(LDFLAGS) -o $@
-
-$(BUILD)/%.c.o: %.c
-	@mkdir -p $(dir $@)
-	$(CC) -MMD -MP -MF $(@:.o=.d) $(CFLAGS) -c -o $@ $<
-
-$(BUILD)/%.cpp.o: %.cpp
-	@mkdir -p $(dir $@)
-	$(CXX) -MMD -MP -MF $(@:.o=.d) $(CXXFLAGS) -c -o $@ $<
-
-include $(wildcard $(DEPSFILES))
-#---------------------------------------------------------------------------------
+	@rm -rf $(OUTDIR) $(BUILD)

@@ -1,22 +1,14 @@
 #include "update.hpp"
 
+#include "3dsx.hpp"
+#include "romfs.hpp"
+#include "smdh.hpp"
+
 #include "file.hpp"
 
 #include <memory.h>
 #include <stdio.h>
 #include <sys/stat.h>
-
-#define errorf(format, ...)              \
-    {                                    \
-        printf((format), ##__VA_ARGS__); \
-        return -1;                       \
-    };
-
-#define error(str)             \
-    {                          \
-        errorf("%s\n", (str)); \
-        return -1;             \
-    }
 
 /**
  * @brief Update the SMDH and RomFS sections
@@ -37,7 +29,7 @@ int update::init(const args::Info& args)
     executable.Read(&header, _3DSX::HEADER_SIZE);
 
     /* verify the magic in the header */
-    if (header.magic != _3DSX::MAGIC)
+    if (strncmp(header.magic, _3DSX::MAGIC, 4) != 0)
         error("Invalid 3DSX file.");
 
     if (header.headerSize <= 32)
@@ -92,7 +84,7 @@ int update::init(const args::Info& args)
         /* validate the new data */
         memcpy(&smdhHeader, smdhData.data(), SMDH::HEADER_SIZE);
 
-        if (smdhHeader.magic != SMDH::MAGIC)
+        if (strncmp(smdhHeader.magic, SMDH::MAGIC, 4) != 0)
             error("Invalid SMDH file.");
 
         /* set the extended header data for the SMDH */
@@ -104,7 +96,7 @@ int update::init(const args::Info& args)
         /* if we didn't get any SMDH data, use the original data */
         if (extendedHeader.smdhSize != 0)
         {
-            smdhData = std::vector<uint8_t>(extendedHeader.smdhSize);
+            smdhData.resize(extendedHeader.smdhSize);
             executable.Read(smdhData.data(), smdhData.size());
         }
     }
@@ -117,7 +109,7 @@ int update::init(const args::Info& args)
         /* validate the new RomFS data */
         memcpy(&romfsHeader, romfsData.data(), RomFS::HEADER_SIZE);
 
-        if (romfsHeader.magic != RomFS::MAGIC)
+        if (strncmp(romfsHeader.magic, RomFS::MAGIC, 4) != 0)
             error("Invalid RomFS file.");
 
         /* set the extended header data for the RomFS */
@@ -165,25 +157,4 @@ int update::init(const args::Info& args)
         errorf("Failed to close file %s.", updated.GetFilename().c_str());
 
     return 0;
-}
-
-/**
- * @brief Read a file
- *
- * @param filepath Path to the file to read
- *
- * @return Data* data ptr object holding the file content
- */
-std::vector<uint8_t> update::read(const char* filepath)
-{
-    File file(filepath);
-
-    if (!file.Open(File::MODE_READ))
-    {
-        file.Close();
-
-        return std::vector<uint8_t>(0);
-    }
-
-    return file.Read();
 }
