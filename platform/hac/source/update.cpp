@@ -29,9 +29,9 @@ int update::init(const args::Info& args)
     if (strncmp(header.magic, NRO::MAGIC, 4) != 0)
         error("Invalid NRO header.");
 
-    size_t dataSize = header.totalSize - (NRO::START_SIZE + NRO::HEADER_SIZE);
-
-    std::vector<uint8_t> nroData(dataSize);
+    /* get the executable data */
+    std::vector<uint8_t> nroData(header.totalSize);
+    executable.Seek(0);
     executable.Read(nroData.data(), nroData.size());
 
     /* get the assets data */
@@ -120,20 +120,10 @@ int update::init(const args::Info& args)
     if (!updated.Open(File::MODE_WRITE))
         errorf("Failed to open %s for writing.", updated.GetFilename().c_str());
 
-    for (size_t index = 0; index < 3; index++)
-    {
-        executable.Seek(header.segmentHeaders[index].offset);
-        std::vector<uint8_t> buffer = executable.Read(header.segmentHeaders[index].size);
-
-        updated.Write(buffer.data(), buffer.size());
-    }
-
-    /* write our header */
-    updated.Seek(NRO::START_SIZE);
-    updated.Write(&header, NRO::HEADER_SIZE);
+    /* write the executable data */
+    updated.Write(nroData.data(), nroData.size());
 
     /* write our assets header */
-    updated.Seek(header.totalSize);
     updated.Write(&assetsHeader, Assets::HEADER_SIZE);
 
     if (iconData.size() != 0)
