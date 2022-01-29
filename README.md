@@ -1,3 +1,5 @@
+[![CI](https://github.com/TurtleP/nintenbrew-updaters/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/TurtleP/nintenbrew-updaters/actions/workflows/c-cpp.yml)
+
 ## Requirements
 There aren't any real "requirements" but if you want to properly update the binary sections, you [will need `devkitpro-pacman`](https://devkitpro.org/wiki/devkitPro_pacman). Once installed, you will need the following packages installed to build certain things, e.g. metadata and RomFS.
 
