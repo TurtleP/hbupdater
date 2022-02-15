@@ -55,7 +55,7 @@ int update::init(const args::Info& args)
         int64_t read = executable.Read(&relocationHeaders[index], header.relocationHeaderSize);
 
         if (read != header.relocationHeaderSize)
-            errorf("Cannot read relocation header %d", index);
+            errorf("Cannot read relocation header %zu", index);
 
         /* add up the total relocations */
         for (uint32_t type = 0; type < numRelocationTypes; type++)

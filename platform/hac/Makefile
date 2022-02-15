@@ -2,8 +2,8 @@
 .SUFFIXES:
 #---------------------------------------------------------------------------------
 TARGET		:= $(__APP_NAME__)
-SOURCES		:= ${COMMON_SOURCES}  platform/ctr/source
-INCLUDES	:= ${COMMON_INCLUDES} platform/ctr/include
+SOURCES		:= ${COMMON_SOURCES}  platform/hac/source
+INCLUDES	:= ${COMMON_INCLUDES} platform/hac/include
 #---------------------------------------------------------------------------------
 # filetypes
 #---------------------------------------------------------------------------------
@@ -28,7 +28,7 @@ CXXSTDLIB	:= c++17
 
 RELEASE_FLAGS	:= $(if $(strip $(DEBUG)),$(DEBUGGIN),$(OPTIMIZE))
 #---------------------------------------------------------------------------------
-CFLAGS		:= $(CFLAGS) $(INCLUDE) -D__CTR__ $(RELEASE_FLAGS) $(DEFINES)
+CFLAGS		:= -Wall -Wextra $(CFLAGS) $(INCLUDE) -D__HAC__ $(RELEASE_FLAGS) $(DEFINES)
 CXXFLAGS 	:= $(CFLAGS) $(CXXFLAGS) -std=$(CXXSTDLIB) $(RELEASE_FLAGS)
 LDFLAGS 	:= $(LDFLAGS) $(RELEASE_FLAGS)
 #---------------------------------------------------------------------------------
