@@ -63,5 +63,5 @@ $(BUILD)/%.cpp.o: %.cpp
 	@mkdir -p $(dir $@)
 	$(CXX) -MMD -MP -MF $(@:.o=.d) $(CXXFLAGS) -c -o $@ $<
 
-include $(wildcard $(DEPSFILES))
+-include $(DEPSFILES)
 #---------------------------------------------------------------------------------
