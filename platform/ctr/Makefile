@@ -25,7 +25,7 @@ INCLUDE	:= $(foreach dir, $(INCLUDES), -I$(CURDIR)/$(dir))
 #---------------------------------------------------------------------------------
 OPTIMIZE 	:= -O2 -flto
 DEBUGGIN	:= -g -Og
-CXXSTDLIB	:= c++20
+CXXSTDLIB	:= c++17
 
 RELEASE_FLAGS	:= $(if $(strip $(DEBUG)), $(DEBUGGIN), $(OPTIMIZE))
 #---------------------------------------------------------------------------------
