@@ -7,19 +7,18 @@ INCLUDES	:= ${COMMON_INCLUDES} platform/ctr/include
 #---------------------------------------------------------------------------------
 # filetypes
 #---------------------------------------------------------------------------------
-CFILES		:= $(foreach dir, $(SOURCES), $(wildcard $(dir)/*.c))
-CPPFILES	:= $(foreach dir, $(SOURCES), $(wildcard $(dir)/*.cpp))
+CFILES		:= $(foreach dir,$(SOURCES),$(wildcard $(dir)/*.c))
+CPPFILES	:= $(foreach dir,$(SOURCES),$(wildcard $(dir)/*.cpp))
 #---------------------------------------------------------------------------------
 # files we need
 #---------------------------------------------------------------------------------
 OUTPUT	:= $(OUTDIR)/$(TARGET)
 
 OFILES 			:= $(CPPFILES:.cpp=.cpp.o) $(CFILES:.c=.c.o)
-BUILD_OFILES	:= $(foreach file, $(OFILES), $(addprefix $(BUILD)/, $(file)))
-$(info ${BUILD_OFILES})
+BUILD_OFILES	:= $(foreach file,$(OFILES),$(addprefix $(BUILD)/,$(file)))
 DEPSFILES 		:= $(BUILD_OFILES:.o=.d)
 
-INCLUDE	:= $(foreach dir, $(INCLUDES), -I$(CURDIR)/$(dir))
+INCLUDE	:= $(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir))
 #---------------------------------------------------------------------------------
 # linker and compiler options
 #---------------------------------------------------------------------------------
@@ -27,7 +26,7 @@ OPTIMIZE 	:= -O2 -flto
 DEBUGGIN	:= -g -Og
 CXXSTDLIB	:= c++17
 
-RELEASE_FLAGS	:= $(if $(strip $(DEBUG)), $(DEBUGGIN), $(OPTIMIZE))
+RELEASE_FLAGS	:= $(if $(strip $(DEBUG)),$(DEBUGGIN),$(OPTIMIZE))
 #---------------------------------------------------------------------------------
 CFLAGS		:= $(CFLAGS) $(INCLUDE) -D__CTR__ $(RELEASE_FLAGS) $(DEFINES)
 CXXFLAGS 	:= $(CFLAGS) $(CXXFLAGS) -std=$(CXXSTDLIB) $(RELEASE_FLAGS)
@@ -35,7 +34,7 @@ LDFLAGS 	:= $(LDFLAGS) $(RELEASE_FLAGS)
 #---------------------------------------------------------------------------------
 # use CXX for linking C++ projects, CC for standard C
 #---------------------------------------------------------------------------------
-LD := $(if $(strip $(CPPFILES)), $(CXX), $(CC))
+LD := $(if $(strip $(CPPFILES)),$(CXX),$(CC))
 #---------------------------------------------------------------------------------
 .PHONY: all clean
 #---------------------------------------------------------------------------------
