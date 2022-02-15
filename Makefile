@@ -10,6 +10,9 @@ export OUTDIR	:= dist
 export COMMON_INCLUDES ?= include
 export COMMON_SOURCES  ?= source
 #-----------------------------------
+export VERSION := 0.1.0
+export DEFINES := -D__APP_VERSION__=\"${VERSION}\"
+#-----------------------------------
 # Build
 #-----------------------------------
 all: ctr hac

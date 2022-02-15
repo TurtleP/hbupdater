@@ -1,8 +1,15 @@
 #include "update.hpp"
-#include "file.hpp"
 
 #include "assets.hpp"
 #include "nro.hpp"
+
+#include "file.hpp"
+
+#include <memory.h>
+#include <stdio.h>
+#include <sys/stat.h>
+
+#include <args.hpp>
 
 /**
  * @brief Update the SMDH and RomFS sections

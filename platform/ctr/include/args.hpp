@@ -1,3 +1,5 @@
+#pragma once
+
 #include "argsc.hpp"
 
 namespace args

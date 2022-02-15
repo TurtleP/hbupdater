@@ -16,19 +16,20 @@ OUTPUT	:= $(OUTDIR)/$(TARGET)
 
 OFILES 			:= $(CPPFILES:.cpp=.cpp.o) $(CFILES:.c=.c.o)
 BUILD_OFILES	:= $(foreach file, $(OFILES), $(addprefix $(BUILD)/, $(file)))
+$(info ${BUILD_OFILES})
 DEPSFILES 		:= $(BUILD_OFILES:.o=.d)
 
 INCLUDE	:= $(foreach dir, $(INCLUDES), -I$(CURDIR)/$(dir))
 #---------------------------------------------------------------------------------
 # linker and compiler options
 #---------------------------------------------------------------------------------
-OPTIMIZE 	:= -O3 -flto
+OPTIMIZE 	:= -O2 -flto
 DEBUGGIN	:= -g -Og
-CXXSTDLIB	:= c++17
+CXXSTDLIB	:= c++20
 
 RELEASE_FLAGS	:= $(if $(strip $(DEBUG)), $(DEBUGGIN), $(OPTIMIZE))
 #---------------------------------------------------------------------------------
-CFLAGS		:= $(CFLAGS) $(INCLUDE) -D__CTR__ $(RELEASE_FLAGS)
+CFLAGS		:= $(CFLAGS) $(INCLUDE) -D__CTR__ $(RELEASE_FLAGS) $(DEFINES)
 CXXFLAGS 	:= $(CFLAGS) $(CXXFLAGS) -std=$(CXXSTDLIB) $(RELEASE_FLAGS)
 LDFLAGS 	:= $(LDFLAGS) $(RELEASE_FLAGS)
 #---------------------------------------------------------------------------------
