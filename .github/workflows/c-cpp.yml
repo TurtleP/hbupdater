@@ -14,6 +14,15 @@ jobs:
       - uses: actions/checkout@v2
       - run: make
   
+      - id: commit
+        uses: pr-mpt/actions-commit-hash@v1
+        
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v2.3.1
+        with:
+          name: Windows-${{ steps.commit.outputs.short }}
+          path: dist/*
+        
   macOS:
     runs-on: macos-latest
     
@@ -21,9 +30,27 @@ jobs:
       - uses: actions/checkout@v2
       - run: make
 
+      - id: commit
+        uses: pr-mpt/actions-commit-hash@v1
+        
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v2.3.1
+        with:
+          name: macOS-${{ steps.commit.outputs.short }}
+          path: dist/*
+  
   Linux:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
     - run: make
+    
+    - id: commit
+      uses: pr-mpt/actions-commit-hash@v1
+        
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v2.3.1
+      with:
+        name: Linux-${{ steps.commit.outputs.short }}
+        path: dist/*
