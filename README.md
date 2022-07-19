@@ -1,4 +1,4 @@
-[![CI](https://github.com/TurtleP/nintenbrew-updaters/actions/workflows/CI.yml/badge.svg)](https://github.com/TurtleP/nintenbrew-updaters/actions/workflows/CI.yml)
+[![CI](https://github.com/TurtleP/hbupdater/actions/workflows/CI.yml/badge.svg)](https://github.com/TurtleP/nintenbrew-updaters/actions/workflows/CI.yml)
 
 ## Requirements
 
