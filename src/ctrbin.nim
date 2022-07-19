@@ -14,7 +14,7 @@ import os
 
 const CtrParamHelp*: Table[string, string] =
     {"filepath": "path to the 3dsx file",
-    "metadata": "path to the new SMDH file or comma-separated title info [name], [author], [description]",
+    "metadata": "path to the new SMDH file or title info [name] [description] [author]",
     "iconPath": "path to the new SMDH icon from a PNG",
     "romfsPath": "path to the new RomFS file",
     "output": "path to output the new 3dsx file, including filename"}.toTable()
@@ -77,7 +77,7 @@ proc ctr*(filepath: string, metadata = newSeq[string](), iconPath = "", romfsPat
 
     let executionData = fileStream.readStr(executionSize.int)
 
-    var smdhBinary = toSmdh(fileStream.readStr(SMDH_STRUCT_SIZE.int))
+    var smdhBinary: Smdh
 
     if (len(metadata) > 0x0):
         # check if the new smdh file exists
@@ -87,6 +87,8 @@ proc ctr*(filepath: string, metadata = newSeq[string](), iconPath = "", romfsPat
             extendedHeader.smdhOffset = fileStream.getPosition().uint32
             extendedHeader.smdhSize = os.getFileSize(metadata[0]).uint32
         else:
+            smdhBinary = toSmdh(fileStream.readStr(SMDH_STRUCT_SIZE.int))
+
             # if not, try setting new metadata
             if (len(metadata) <= 0x03):
                 let (short, long, author) = getMetadata(smdhBinary, metadata)

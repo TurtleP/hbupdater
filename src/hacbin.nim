@@ -2,7 +2,7 @@ import tables
 
 const HacParamHelp*: Table[string, string] =
     {"filepath": "path to the nro file",
-    "metadata": "path to the new NACP file or comma-separated title info [name], [author]",
+    "metadata": "path to the new NACP file or title info [name] [author]",
     "iconPath": "path to the new icon from a JPG",
     "romfsPath": "path to the new RomFS file",
     "output": "path to output the new nro file, including filename"}.toTable()
