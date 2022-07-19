@@ -19,7 +19,7 @@ jobs:
       - name: Setup Nim environment
         uses: jiro4989/setup-nim-action@v1.3.54
 
-      - run: nimble build
+      - run: nimble build -Y
 
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v2.3.1
@@ -39,7 +39,7 @@ jobs:
       - name: Setup Nim environment
         uses: jiro4989/setup-nim-action@v1.3.54
 
-      - run: nimble build
+      - run: nimble build -Y
 
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v2.3.1
@@ -59,7 +59,7 @@ jobs:
     - name: Setup Nim environment
       uses: jiro4989/setup-nim-action@v1.3.54
 
-    - run: nimble build
+    - run: nimble build -Y
 
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2.3.1
