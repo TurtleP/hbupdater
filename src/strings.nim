@@ -15,9 +15,10 @@ type
         FailedToClose = "Failed to close file `$1`."
 
         FileOrMetadataExpected = "SMDH or Metadata was expected."
-        MetadataExpected = "SMDH expected, cannot be combined with Icon"
-
         NoMetadata = "No Metadata was found."
+
+        # HAC Errors
+        NoMetadataFound = "No $1 in AssetsHeader found."
 
         # CTR Errors
         InvalidCtrBinary = "Invalid 3DSX file."
