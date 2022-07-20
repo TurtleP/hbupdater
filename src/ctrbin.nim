@@ -42,16 +42,6 @@ proc getRelocationData(header: CtrHeader, stream: FileStream): (seq[CtrRelocatio
 
     return (relocationHeaders, totalRelocations)
 
-proc getMetadata(smdh: Smdh, metadata: seq[string]): (string, string, string) =
-    metadata.unpackSeq(short, long, author)
-    smdh.getTitles()[0].unpackSeq(shortSmdh, longSmdh, authorSmdh)
-
-    let name = if short.isEmptyOrWhitespace(): shortSmdh else: short
-    let description = if short.isEmptyOrWhitespace(): longSmdh else: long
-    let developer = if author.isEmptyOrWhitespace(): authorSmdh else: author
-
-    return (name, description, developer)
-
 proc ctr*(filepath: string, metadata = newSeq[string](), iconPath = "", romfsPath: string = "",
         output: string) =
     ## Updates the binary for a Nintendo 3DS (*.3dsx) homebrew application
@@ -91,7 +81,7 @@ proc ctr*(filepath: string, metadata = newSeq[string](), iconPath = "", romfsPat
 
             # if not, try setting new metadata
             if (len(metadata) <= 0x03):
-                let (short, long, author) = getMetadata(smdhBinary, metadata)
+                metadata.unpackSeq(short, long, author)
                 smdhBinary.setTitles(short, long, author)
             else:
                 strings.error(Error.NoMetadata)
