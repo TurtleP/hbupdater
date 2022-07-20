@@ -13,19 +13,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - id: commit
-        uses: pr-mpt/actions-commit-hash@v1
-
       - name: Setup Nim environment
         uses: jiro4989/setup-nim-action@v1.3.54
 
       - run: nimble build -Y
-
-      - name: Upload a Build Artifact
-        uses: actions/upload-artifact@v2.3.1
-        with:
-          name: Windows-${{ steps.commit.outputs.short }}
-          path: dist/*
 
   macOS:
     runs-on: macos-latest
@@ -33,19 +24,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - id: commit
-        uses: pr-mpt/actions-commit-hash@v1
-
       - name: Setup Nim environment
         uses: jiro4989/setup-nim-action@v1.3.54
 
       - run: nimble build -Y
-
-      - name: Upload a Build Artifact
-        uses: actions/upload-artifact@v2.3.1
-        with:
-          name: macOS-${{ steps.commit.outputs.short }}
-          path: dist/*
 
   Linux:
     runs-on: ubuntu-latest
@@ -53,16 +35,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - id: commit
-      uses: pr-mpt/actions-commit-hash@v1
-
     - name: Setup Nim environment
       uses: jiro4989/setup-nim-action@v1.3.54
 
     - run: nimble build -Y
-
-    - name: Upload a Build Artifact
-      uses: actions/upload-artifact@v2.3.1
-      with:
-        name: Linux-${{ steps.commit.outputs.short }}
-        path: dist/*
