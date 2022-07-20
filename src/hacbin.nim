@@ -55,8 +55,6 @@ proc hac*(filepath: string, metadata = newSeq[string](), iconPath = "",
         if (assetsHeader.icon.size != 0):
             fileStream.setPosition((header.totalSize + assetsHeader.icon.offset).int)
             iconBuffer = fileStream.readStr(assetsHeader.icon.size.int)
-        else:
-            strings.error(Error.NoMetadataFound, "icon")
 
     assetsOffset += assetsHeader.icon.size
 
@@ -81,8 +79,6 @@ proc hac*(filepath: string, metadata = newSeq[string](), iconPath = "",
                     nacpBinary.setTitles(name, author)
                 else:
                     strings.error(Error.NoMetadata)
-            else:
-                strings.error(Error.NoMetadataFound, "NACP")
     else:
         strings.error(Error.FileOrMetadataExpected)
 
@@ -100,8 +96,6 @@ proc hac*(filepath: string, metadata = newSeq[string](), iconPath = "",
         if (assetsHeader.romfs.size != 0):
             fileStream.setPosition((header.totalSize + assetsHeader.romfs.offset).int)
             iconBuffer = fileStream.readStr(assetsHeader.romfs.size.int)
-        else:
-            strings.error(Error.NoMetadataFound, "RomFS")
 
     chain(newFileStream(output, fmWrite) as updatedFile):
         write(executionData)
