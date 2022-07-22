@@ -19,26 +19,26 @@ const CtrParamHelp*: Table[string, string] =
     "romfsPath": "path to the new RomFS file",
     "output": "path to output the new 3dsx file, including filename"}.toTable()
 
-proc getRelocationData(header: CtrHeader, stream: FileStream): (seq[CtrRelocationHeader], uint) =
+proc getRelocationData(header: CtrHeader, stream: FileStream): (array[NUMBER_RELOC_TABLES, CtrRelocationHeader], uint) =
 
     let relocationHeaderSize = header.relocationHeaderSize
 
-    var relocationHeaders: seq[CtrRelocationHeader]
+    var relocationHeaders: array[NUMBER_RELOC_TABLES, CtrRelocationHeader]
     var totalRelocations: uint = 0
-
 
     for index in 0 ..< NUMBER_RELOC_TABLES:
         let start: int64 = stream.getPosition()
 
-        relocationHeaders[index] = toCtrRelocationHeader(stream.readStr(relocationHeaderSize.int))
+        let buffer = stream.readStr(relocationHeaderSize.int)
+        relocationHeaders[index] = toCtrRelocationHeader(buffer)
 
         let read = stream.getPosition() - start
 
         if (read != relocationHeaderSize.int64):
             strings.error(Error.CannotReadRelocHeader, index)
 
-    for item in relocationHeaders:
-        totalRelocations += (item.absolute + item.relative)
+        totalRelocations += relocationHeaders[index].absolute
+        totalRelocations += relocationHeaders[index].relative
 
     return (relocationHeaders, totalRelocations)
 
@@ -84,17 +84,28 @@ proc ctr*(filepath: string, metadata = newSeq[string](), iconPath = "", romfsPat
                 metadata.unpackSeq(short, long, author)
                 smdhBinary.setTitles(short, long, author)
             else:
-                strings.error(Error.NoMetadata)
+                strings.error(Error.FileOrMetadataExpected)
     else:
-        strings.error(Error.FileOrMetadataExpected)
+        # grab the default smdh file data
+        if extendedHeader.smdhSize != 0:
+            smdhBinary = toSmdh(fileStream.readStr(SMDH_STRUCT_SIZE.int))
 
-    if (not iconPath.isEmptyOrWhitespace()):
+    if (not smdhBinary.isNil and not iconPath.isEmptyOrWhitespace()):
         smdhBinary.setIcon(iconPath)
 
-    var romfsBinary = toRomfs(fileStream.readStr(ROMFS_STRUCT_SIZE.int))
+    var romfsBuffer: string
 
-    if (not romfsPath.isEmptyOrWhitespace() and os.fileExists(romfsPath)):
-        romfsBinary = toRomfs(io.readFile(romfsPath))
+    if (os.fileExists(romfsPath)):
+        romfsBuffer = io.readFile(romfsPath)
+        discard toRomfs(romfsBuffer)
+
+        extendedHeader.romfsOffset = extendedHeader.smdhOffset + extendedHeader.smdhSize
+    else:
+        if extendedHeader.romfsOffset != 0:
+            if fileStream.getPosition() == extendedHeader.smdhOffset.int:
+                fileStream.setPosition(extendedHeader.romfsOffset.int)
+
+            romfsBuffer = fileStream.readAll()
 
     chain(io.open(output, fmWrite) as updatedFile):
         write(header.fromCtrHeader())
@@ -104,7 +115,12 @@ proc ctr*(filepath: string, metadata = newSeq[string](), iconPath = "", romfsPat
             write(relocations[index].fromCtrRelocationHeader())
 
         write(executionData)
-        write(smdhBinary.fromSmdh())
-        write(romfsBinary.fromRomfs())
+
+        if extendedHeader.smdhOffset != 0:
+            write(smdhBinary.fromSmdh())
+
+        if extendedHeader.romfsOffset != 0:
+            write(romfsBuffer)
+
 
     updatedFile.close()
