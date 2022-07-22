@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  Windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Nim environment
+        uses: jiro4989/setup-nim-action@v1.3.54
+
+      - run: nimble build -Y
+
+  macOS:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Nim environment
+        uses: jiro4989/setup-nim-action@v1.3.54
+
+      - run: nimble build -Y
+
+  Linux:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup Nim environment
+      uses: jiro4989/setup-nim-action@v1.3.54
+
+    - run: nimble build -Y

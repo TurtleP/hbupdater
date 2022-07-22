@@ -1,16 +1,30 @@
-[![CI](https://github.com/TurtleP/nintenbrew-updaters/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/TurtleP/nintenbrew-updaters/actions/workflows/c-cpp.yml)
+[![CI](https://github.com/TurtleP/hbupdater/actions/workflows/CI.yml/badge.svg)](https://github.com/TurtleP/nintenbrew-updaters/actions/workflows/CI.yml)
 
 ## Requirements
-There aren't any real "requirements" but if you want to properly update the binary sections, you [will need `devkitpro-pacman`](https://devkitpro.org/wiki/devkitPro_pacman). Once installed, you will need the following packages installed to build certain things, e.g. metadata and RomFS.
 
-- 3dstools
-- switch-tools
+The main requirements are `3dstools` and `switch-tools`, which can be obtained from [`devkitpro-pacman`](https://devkitpro.org/wiki/devkitPro_pacman). These have tools which can build respective metadata and RomFS images needed. However, you can also set the individual title/description/author information yourself instead.
+
+## Usage
+
+```
+  hbupdater {SUBCMD}  [sub-command options & parameters]
+where {SUBCMD} is one of:
+  help  print comprehensive or per-cmd help
+  ctr   Updates the binary for a Nintendo 3DS (*.3dsx) homebrew application
+  hac   Updates the binary for a Nintendo Switch (*.nro) homebrew application
+
+hbupdater {-h|--help} or with no args at all prints this message.
+hbupdater --help-syntax gives general cligen syntax help.
+Run "hbupdater {help SUBCMD|SUBCMD --help}" to see help for just SUBCMD.
+Run "hbupdater help" to get *comprehensive* help.
+Top-level --version also available
+```
 
 ## Current Supported Binaries
-- Nintendo 3DS (3DSX)
-- Nintendo Switch (NRO)
+
+- Nintendo 3DS (\*.3dsx)
+- Nintendo Switch (\*.nro)
 
 ## Compilation
-Simply running `make` will output `3dsxupdate` and `nroupdate` in the `dist` folder on root. If you want to only have one:
-1. 3DSX: `make ctr`
-2. NRO: `make hac`
+
+You will need to install [nim-lang](https://nim-lang.org/), although preferrably via [choosenim](https://github.com/dom96/choosenim). Once done, change to the working directory of this project and run `nimble build`.
