@@ -1,6 +1,5 @@
 import nimtenbrew/ctr/binary
 import nimtenbrew/ctr/smdh
-import nimtenbrew/ctr/romfs
 
 import unpack
 import chain
@@ -14,7 +13,7 @@ import os
 
 const CtrParamHelp*: Table[string, string] =
     {"filepath": "path to the 3dsx file",
-    "metadata": "path to the new SMDH file or title info [name] [description] [author]",
+    "metadata": "path to the new SMDH file or title info ,[name],[description],[author]",
     "iconPath": "path to the new SMDH icon from a PNG",
     "romfsPath": "path to the new RomFS file",
     "output": "path to output the new 3dsx file, including filename"}.toTable()
@@ -42,8 +41,8 @@ proc getRelocationData(header: CtrHeader, stream: FileStream): (array[NUMBER_REL
 
     return (relocationHeaders, totalRelocations)
 
-proc ctr*(filepath: string, metadata = newSeq[string](), iconPath = "", romfsPath: string = "",
-        output: string) =
+proc ctr*(filepath: string, metadata = newSeq[string](0), iconPath = "",
+        romfsPath = "", output: string) =
     ## Updates the binary for a Nintendo 3DS (*.3dsx) homebrew application
 
     let fileStream = streams.newFileStream(filepath)
@@ -97,7 +96,6 @@ proc ctr*(filepath: string, metadata = newSeq[string](), iconPath = "", romfsPat
 
     if (os.fileExists(romfsPath)):
         romfsBuffer = io.readFile(romfsPath)
-        discard toRomfs(romfsBuffer)
 
         extendedHeader.romfsOffset = extendedHeader.smdhOffset + extendedHeader.smdhSize
     else:
