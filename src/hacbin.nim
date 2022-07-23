@@ -5,7 +5,6 @@ import nimtenbrew/hac/nacp
 import strings
 
 import chain
-import unpack
 
 import os
 import streams
@@ -13,12 +12,12 @@ import tables
 
 const HacParamHelp*: Table[string, string] =
     {"filepath": "path to the nro file",
-    "metadata": "path to the new NACP file or title info ,[name],[author]",
+    "metadata": "path to the new NACP file or title info",
     "iconPath": "path to the new icon from a JPG",
     "romfsPath": "path to the new RomFS file",
     "output": "path to output the new nro file, including filename"}.toTable()
 
-proc hac*(filepath: string, metadata = newSeq[string](0), iconPath = "",
+proc hac*(filepath: string, metadata = "", title = "", author = "", iconPath = "",
         romfsPath = "", output: string) =
     ## Updates the binary for a Nintendo Switch (*.nro) homebrew application
 
@@ -61,12 +60,11 @@ proc hac*(filepath: string, metadata = newSeq[string](0), iconPath = "",
     # handle the nacp vs metadata situation
     var nacpBinary: Nacp
 
-    if (len(metadata) == 1):
-        if (os.fileExists(metadata[0])):
-            nacpBinary = toNacp(io.readFile(metadata[0]))
+    if (os.fileExists(metadata)):
+        nacpBinary = toNacp(io.readFile(metadata))
 
-            assetsHeader.nacp.offset = assetsOffset
-            assetsHeader.nacp.size = os.getFileSize(metadata[0]).uint32
+        assetsHeader.nacp.offset = assetsOffset
+        assetsHeader.nacp.size = os.getFileSize(metadata).uint32
     else:
         if (assetsHeader.nacp.size != 0):
             # capture original nacp offset
@@ -79,10 +77,8 @@ proc hac*(filepath: string, metadata = newSeq[string](0), iconPath = "",
             fileStream.setPosition((header.totalSize + nacpOffset).int)
             nacpBinary = toNacp(fileStream.readStr(NACP_STRUCT_SIZE.int))
 
-            # if not, try setting new metadata
-            if (len(metadata) > 0x0 and len(metadata) <= 0x02):
-                metadata.unpackSeq(name, author)
-                nacpBinary.setTitles(name, author)
+            # handled in nimtenbrew when these are empty
+            nacpBinary.setTitles(title, author)
         else:
             strings.error(Error.NoMetadata)
 

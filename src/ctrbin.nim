@@ -1,7 +1,6 @@
 import nimtenbrew/ctr/binary
 import nimtenbrew/ctr/smdh
 
-import unpack
 import chain
 
 import strings
@@ -13,7 +12,7 @@ import os
 
 const CtrParamHelp*: Table[string, string] =
     {"filepath": "path to the 3dsx file",
-    "metadata": "path to the new SMDH file or title info ,[name],[description],[author]",
+    "metadata": "path to the new SMDH file or title info",
     "iconPath": "path to the new SMDH icon from a PNG",
     "romfsPath": "path to the new RomFS file",
     "output": "path to output the new 3dsx file, including filename"}.toTable()
@@ -41,8 +40,8 @@ proc getRelocationData(header: CtrHeader, stream: FileStream): (array[NUMBER_REL
 
     return (relocationHeaders, totalRelocations)
 
-proc ctr*(filepath: string, metadata = newSeq[string](0), iconPath = "",
-        romfsPath = "", output: string) =
+proc ctr*(filepath: string, metadata = "", title = "", description = "", author = "",
+        iconPath = "", romfsPath = "", output: string) =
     ## Updates the binary for a Nintendo 3DS (*.3dsx) homebrew application
 
     let fileStream = streams.newFileStream(filepath)
@@ -68,26 +67,16 @@ proc ctr*(filepath: string, metadata = newSeq[string](0), iconPath = "",
 
     var smdhBinary: Smdh
 
-    if (len(metadata) > 0x0):
-        # check if the new smdh file exists
-        if (os.fileExists(metadata[0])):
-            smdhBinary = toSmdh(io.readFile(metadata[0]))
+    # check if the new smdh file exists
+    if (os.fileExists(metadata)):
+        smdhBinary = toSmdh(io.readFile(metadata))
 
-            extendedHeader.smdhOffset = fileStream.getPosition().uint32
-            extendedHeader.smdhSize = os.getFileSize(metadata[0]).uint32
-        else:
-            smdhBinary = toSmdh(fileStream.readStr(SMDH_STRUCT_SIZE.int))
-
-            # if not, try setting new metadata
-            if (len(metadata) <= 0x03):
-                metadata.unpackSeq(short, long, author)
-                smdhBinary.setTitles(short, long, author)
-            else:
-                strings.error(Error.FileOrMetadataExpected)
+        extendedHeader.smdhOffset = fileStream.getPosition().uint32
+        extendedHeader.smdhSize = os.getFileSize(metadata).uint32
     else:
-        # grab the default smdh file data
-        if extendedHeader.smdhSize != 0:
-            smdhBinary = toSmdh(fileStream.readStr(SMDH_STRUCT_SIZE.int))
+        smdhBinary = toSmdh(fileStream.readStr(SMDH_STRUCT_SIZE.int))
+        # handled in nimtenbrew when these are empty
+        smdhBinary.setTitles(title, description, author)
 
     if (not smdhBinary.isNil and not iconPath.isEmptyOrWhitespace()):
         smdhBinary.setIcon(iconPath)
