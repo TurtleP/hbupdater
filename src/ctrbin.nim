@@ -56,11 +56,15 @@ proc ctr*(filepath: string, metadata = "", title = "", description = "",
     # binarylang checks the magic value from the struct and will error if invalid
     let header = toCtrHeader(fileStream.readStr(BINARY_HEADER_SIZE.int))
 
-    if (header.headerSize <= BINARY_HEADER_SIZE):
-        strings.error(Error.NoExtendedHeader)
+    var extendedHeader: CtrExtendedHeader
 
-    let extendedHeader = toCtrExtendedHeader(fileStream.readStr(
-            EXTENDED_HEADER_SIZE.int))
+    # read the original extheader if it exists
+    if (header.headerSize > BINARY_HEADER_SIZE):
+        extendedHeader = toCtrExtendedHeader(fileStream.readStr(EXTENDED_HEADER_SIZE.int))
+    else:
+        # create a new extheader otherwise
+        header.headerSize = (BINARY_HEADER_SIZE + EXTENDED_HEADER_SIZE).uint16
+        extendedHeader = CtrExtendedHeader()
 
     let (relocations, totalRelocations) = getRelocationData(header, fileStream)
 
@@ -75,27 +79,36 @@ proc ctr*(filepath: string, metadata = "", title = "", description = "",
     # check if the new smdh file exists
     if (os.fileExists(metadata)):
         smdhBinary = toSmdh(io.readFile(metadata))
+        var smdhOffset: uint32 = fileStream.getPosition().uint32
 
-        extendedHeader.smdhOffset = fileStream.getPosition().uint32
+        # if we're adding an extended header
+        if (extendedHeader.smdhSize == 0):
+            let relocationHeadersSize = (NUMBER_RELOC_TABLES * RELOCATION_HEADER_SIZE)
+            smdhOffset = (header.headerSize.uint32 + relocationHeadersSize.uint32 + executionSize.uint32)
+
+        extendedHeader.smdhOffset = smdhOffset
         extendedHeader.smdhSize = os.getFileSize(metadata).uint32
     else:
-        smdhBinary = toSmdh(fileStream.readStr(SMDH_STRUCT_SIZE.int))
+        # if the extheader didn't exist, this would be zero
+        if (extendedHeader.smdhSize != 0):
+            smdhBinary = toSmdh(fileStream.readStr(SMDH_STRUCT_SIZE.int))
+
+    if (not smdhBinary.isNil):
         # handled in nimtenbrew when these are empty
         smdhBinary.setTitles(title, description, author)
 
-    if (not smdhBinary.isNil and not iconPath.isEmptyOrWhitespace()):
-        smdhBinary.setIcon(iconPath)
+        if (not iconPath.isEmptyOrWhitespace()):
+            smdhBinary.setIcon(iconPath)
 
     var romfsBuffer: string
 
     if (os.fileExists(romfsPath)):
         romfsBuffer = io.readFile(romfsPath)
 
-        extendedHeader.romfsOffset = extendedHeader.smdhOffset +
-                extendedHeader.smdhSize
+        extendedHeader.romfsOffset = extendedHeader.smdhOffset + extendedHeader.smdhSize
     else:
         if extendedHeader.romfsOffset != 0:
-            if fileStream.getPosition() == extendedHeader.smdhOffset.int:
+            if (fileStream.getPosition() == extendedHeader.smdhOffset.int):
                 fileStream.setPosition(extendedHeader.romfsOffset.int)
 
             romfsBuffer = fileStream.readAll()
@@ -109,10 +122,10 @@ proc ctr*(filepath: string, metadata = "", title = "", description = "",
 
         write(executionData)
 
-        if extendedHeader.smdhOffset != 0:
+        if (extendedHeader.smdhOffset != 0):
             write(smdhBinary.fromSmdh())
 
-        if extendedHeader.romfsOffset != 0:
+        if (extendedHeader.romfsOffset != 0):
             write(romfsBuffer)
 
 

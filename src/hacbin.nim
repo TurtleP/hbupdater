@@ -55,8 +55,11 @@ proc hac*(filepath: string, metadata = "", title = "", author = "",
         assetsHeader.icon.size = os.getFileSize(iconPath).uint32
     else:
         if (assetsHeader.icon.size != 0):
-            fileStream.setPosition((header.totalSize +
-                    assetsHeader.icon.offset).int)
+            # capture original icon offset
+            var iconOffset: uint64 = assetsHeader.icon.offset
+
+            # read original data from original position
+            fileStream.setPosition((header.totalSize + iconOffset).int)
             iconBuffer = fileStream.readStr(assetsHeader.icon.size.int)
 
     assetsOffset += assetsHeader.icon.size
@@ -78,13 +81,15 @@ proc hac*(filepath: string, metadata = "", title = "", author = "",
             if (assetsOffset != nacpOffset):
                 assetsHeader.nacp.offset = assetsOffset
 
+             # read original data from original position
             fileStream.setPosition((header.totalSize + nacpOffset).int)
             nacpBinary = toNacp(fileStream.readStr(NACP_STRUCT_SIZE.int))
-
-            # handled in nimtenbrew when these are empty
-            nacpBinary.setTitles(title, author)
         else:
             strings.error(Error.NoMetadata)
+
+    if (not nacpBinary.isNil):
+        # handled in nimtenbrew when these are empty
+        nacpBinary.setTitles(title, author)
 
     assetsOffset += assetsHeader.nacp.size
 
@@ -98,11 +103,14 @@ proc hac*(filepath: string, metadata = "", title = "", author = "",
         assetsHeader.romfs.size = os.getFileSize(romfsPath).uint32
     else:
         if (assetsHeader.romfs.size != 0):
+            # capture original romfs offset
             var romfsOffset: uint64 = assetsHeader.romfs.offset
 
+            # if the romfs offset isn't our cpatured offset, then update it
             if (assetsOffset != romfsOffset):
                 assetsHeader.romfs.offset = assetsOffset
 
+            # read original data from original position
             fileStream.setPosition((header.totalSize + romfsOffset).int)
             romfsBuffer = fileStream.readStr(assetsHeader.romfs.size.int)
 
