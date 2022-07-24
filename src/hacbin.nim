@@ -19,8 +19,8 @@ const HacParamHelp*: Table[string, string] =
     "romfsPath": "path to the new RomFS file",
     "output": "path to output the new nro file, including filename"}.toTable()
 
-proc hac*(filepath: string, metadata = "", title = "", author = "", iconPath = "",
-        romfsPath = "", output: string) =
+proc hac*(filepath: string, metadata = "", title = "", author = "",
+        iconPath = "", romfsPath = "", output: string) =
     ## Updates the binary for a Nintendo Switch (*.nro) homebrew application
 
     let fileStream = streams.newFileStream(filepath)
@@ -39,7 +39,8 @@ proc hac*(filepath: string, metadata = "", title = "", author = "", iconPath = "
     let executionData = fileStream.readStr(header.totalSize.int)
 
     # read the asset sections
-    var assetsHeader = toAssetsHeader(fileStream.readStr(ASSETS_HEADER_SIZE.int))
+    var assetsHeader = toAssetsHeader(fileStream.readStr(
+            ASSETS_HEADER_SIZE.int))
 
     # set the initial offset for the assets
     var assetsOffset: uint64 = ASSETS_HEADER_SIZE
@@ -54,7 +55,8 @@ proc hac*(filepath: string, metadata = "", title = "", author = "", iconPath = "
         assetsHeader.icon.size = os.getFileSize(iconPath).uint32
     else:
         if (assetsHeader.icon.size != 0):
-            fileStream.setPosition((header.totalSize + assetsHeader.icon.offset).int)
+            fileStream.setPosition((header.totalSize +
+                    assetsHeader.icon.offset).int)
             iconBuffer = fileStream.readStr(assetsHeader.icon.size.int)
 
     assetsOffset += assetsHeader.icon.size

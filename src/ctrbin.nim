@@ -20,7 +20,8 @@ const CtrParamHelp*: Table[string, string] =
     "romfsPath": "path to the new RomFS file",
     "output": "path to output the new 3dsx file, including filename"}.toTable()
 
-proc getRelocationData(header: CtrHeader, stream: FileStream): (array[NUMBER_RELOC_TABLES, CtrRelocationHeader], uint) =
+proc getRelocationData(header: CtrHeader, stream: FileStream): (array[
+        NUMBER_RELOC_TABLES, CtrRelocationHeader], uint) =
 
     let relocationHeaderSize = header.relocationHeaderSize
 
@@ -43,8 +44,8 @@ proc getRelocationData(header: CtrHeader, stream: FileStream): (array[NUMBER_REL
 
     return (relocationHeaders, totalRelocations)
 
-proc ctr*(filepath: string, metadata = "", title = "", description = "", author = "",
-        iconPath = "", romfsPath = "", output: string) =
+proc ctr*(filepath: string, metadata = "", title = "", description = "",
+        author = "", iconPath = "", romfsPath = "", output: string) =
     ## Updates the binary for a Nintendo 3DS (*.3dsx) homebrew application
 
     let fileStream = streams.newFileStream(filepath)
@@ -58,7 +59,8 @@ proc ctr*(filepath: string, metadata = "", title = "", description = "", author 
     if (header.headerSize <= BINARY_HEADER_SIZE):
         strings.error(Error.NoExtendedHeader)
 
-    let extendedHeader = toCtrExtendedHeader(fileStream.readStr(EXTENDED_HEADER_SIZE.int))
+    let extendedHeader = toCtrExtendedHeader(fileStream.readStr(
+            EXTENDED_HEADER_SIZE.int))
 
     let (relocations, totalRelocations) = getRelocationData(header, fileStream)
 
@@ -89,7 +91,8 @@ proc ctr*(filepath: string, metadata = "", title = "", description = "", author 
     if (os.fileExists(romfsPath)):
         romfsBuffer = io.readFile(romfsPath)
 
-        extendedHeader.romfsOffset = extendedHeader.smdhOffset + extendedHeader.smdhSize
+        extendedHeader.romfsOffset = extendedHeader.smdhOffset +
+                extendedHeader.smdhSize
     else:
         if extendedHeader.romfsOffset != 0:
             if fileStream.getPosition() == extendedHeader.smdhOffset.int:
