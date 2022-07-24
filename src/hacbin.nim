@@ -39,8 +39,12 @@ proc hac*(filepath: string, metadata = "", title = "", author = "",
     let executionData = fileStream.readStr(header.totalSize.int)
 
     # read the asset sections
-    var assetsHeader = toAssetsHeader(fileStream.readStr(
-            ASSETS_HEADER_SIZE.int))
+    var assetsHeader: AssetsHeader
+
+    try:
+        assetsHeader = toAssetsHeader(fileStream.readStr(ASSETS_HEADER_SIZE.int))
+    except:
+        assetsHeader = AssetsHeader()
 
     # set the initial offset for the assets
     var assetsOffset: uint64 = ASSETS_HEADER_SIZE
@@ -84,8 +88,6 @@ proc hac*(filepath: string, metadata = "", title = "", author = "",
              # read original data from original position
             fileStream.setPosition((header.totalSize + nacpOffset).int)
             nacpBinary = toNacp(fileStream.readStr(NACP_STRUCT_SIZE.int))
-        else:
-            strings.error(Error.NoMetadata)
 
     if (not nacpBinary.isNil):
         # handled in nimtenbrew when these are empty
@@ -113,6 +115,8 @@ proc hac*(filepath: string, metadata = "", title = "", author = "",
             # read original data from original position
             fileStream.setPosition((header.totalSize + romfsOffset).int)
             romfsBuffer = fileStream.readStr(assetsHeader.romfs.size.int)
+
+    os.createDir(os.parentDir(output))
 
     chain(newFileStream(output, fmWrite) as updatedFile):
         write(executionData)

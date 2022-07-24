@@ -113,6 +113,8 @@ proc ctr*(filepath: string, metadata = "", title = "", description = "",
 
             romfsBuffer = fileStream.readAll()
 
+    os.createDir(os.parentDir(output))
+
     chain(io.open(output, fmWrite) as updatedFile):
         write(header.fromCtrHeader())
         write(extendedHeader.fromCtrExtendedHeader())
