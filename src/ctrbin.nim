@@ -12,7 +12,10 @@ import os
 
 const CtrParamHelp*: Table[string, string] =
     {"filepath": "path to the 3dsx file",
-    "metadata": "path to the new SMDH file or title info",
+    "metadata": "path to the new SMDH file",
+    "title": "title of the application",
+    "description": "description of the application",
+    "author": "creator(s) of the application",
     "iconPath": "path to the new SMDH icon from a PNG",
     "romfsPath": "path to the new RomFS file",
     "output": "path to output the new 3dsx file, including filename"}.toTable()
