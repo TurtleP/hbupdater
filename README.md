@@ -2,7 +2,7 @@
 
 ## Requirements
 
-The main requirements are `3dstools` and `switch-tools`, which can be obtained from [`devkitpro-pacman`](https://devkitpro.org/wiki/devkitPro_pacman). These have tools which can build respective metadata and RomFS images needed. However, you can also set the individual title/description/author information yourself instead.
+The optional requirements are `3dstools` and `switch-tools`, which can be obtained from [`devkitpro-pacman`](https://devkitpro.org/wiki/devkitPro_pacman). These have tools which can build respective metadata and RomFS images needed. However, you can also set the individual title/description/author information yourself instead.
 
 ## Usage
 
